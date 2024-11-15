@@ -1,32 +1,61 @@
 import socket
+import time
+from threading import Thread
 
 # Configurações
-SERVER_ADDRESS = "127.0.0.1"
 UDP_PORT = 6667
-TCP_PORT = 6668
+BROADCAST_PORT = 33333
+DESTINATION_ADDRESS = '255.255.255.255'
 
-# Função para o cliente UDP
+# Cliente UDP básico
 def udp_client():
-    udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    message = b"Hello World via UDP!"
-    print(f"Enviando mensagem UDP: {message}")
-    udp_socket.sendto(message, (SERVER_ADDRESS, UDP_PORT))
-    response, _ = udp_socket.recvfrom(1024)
-    print(f"Resposta do servidor UDP: {response.decode()}")
-    udp_socket.close()
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    msg = ("Hello you there!").encode('utf-8') 
+    s.sendto(msg, ('localhost', UDP_PORT))
+    print(f"Mensagem enviada: {msg} para localhost porta {UDP_PORT}")
+    s.close()
 
-# Função para o cliente TCP
-def tcp_client():
-    tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    tcp_socket.connect((SERVER_ADDRESS, TCP_PORT))
-    message = "Hello World via TCP!"
-    print(f"Enviando mensagem TCP: {message}")
-    tcp_socket.send(message.encode())
-    response = tcp_socket.recv(1024)
-    print(f"Resposta do servidor TCP: {response.decode()}")
-    tcp_socket.close()
+# Cliente-servidor UDP (envio e recepção contínuos)
+def udp_client_server():
+    # Criar socket UDP e configurar broadcast e reutilização de endereço
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(('', BROADCAST_PORT))
 
-# Executar os clientes
+    # Função para enviar mensagens periodicamente
+    def send_message(msg):
+        while True:
+            print(f"Enviando mensagem: {msg} para {DESTINATION_ADDRESS} porta {BROADCAST_PORT}")
+            sock.sendto(msg, (DESTINATION_ADDRESS, BROADCAST_PORT))
+            time.sleep(1)
+
+    # Função para receber mensagens
+    def receive_message():
+        while True:
+            message, address = sock.recvfrom(1024)
+            print(f"Mensagem recebida: {message.decode()} de {address}")
+
+    # Criar threads para enviar e receber mensagens
+    message = ("HELLO!").encode('utf-8')
+    send_thread = Thread(target=send_message, args=(message,))
+    receive_thread = Thread(target=receive_message)
+    send_thread.start()
+    receive_thread.start()
+
+    # Aguardar o término das threads
+    send_thread.join()
+    receive_thread.join()
+
+# Executar o agente
 if __name__ == "__main__":
-    udp_client()
-    tcp_client()
+    print("1. Enviar mensagem UDP básica")
+    print("2. Iniciar cliente-servidor UDP")
+    choice = input("Escolha a opção (1/2): ").strip()
+
+    if choice == "1":
+        udp_client()
+    elif choice == "2":
+        udp_client_server()
+    else:
+        print("Opção inválida.")
