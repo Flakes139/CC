@@ -1,0 +1,83 @@
+{
+    "tasks": [
+        {
+            "task_id": "task-202",
+            "frequency": 20,
+            "devices": [
+                {
+                    "device_id": "r1",
+                    "device_metrics": {
+                        "cpu_usage": true,
+                        "ram_usage": true,
+                        "interface_stats": ["eth0", "eth1", "eth2"]
+                    },
+                    "link_metrics": {
+                        "bandwidth": {
+                            "iperf": {
+                                "role": "client",
+                                "server_address": "192.168.1.1",
+                                "test_duration": 10,
+                                "transport": "tcp",
+                                "frequency": 30
+                            }
+                        },
+                        "jitter": {
+                            "iperf": {
+                                "role": "client",
+                                "server_address": "192.168.1.1",
+                                "test_duration": 10,
+                                "frequency": 30
+                            }
+                        },
+                        "packet_loss": {
+                            "iperf": {
+                                "role": "client",
+                                "server_address": "192.168.1.1",
+                                "test_duration": 10,
+                                "frequency": 30
+                            }
+                        },
+                        "latency": {
+                            "ping": {
+                                "destination": "192.168.1.1",
+                                "packet_count": 4,
+                                "frequency": 30
+                            }
+                        }
+                    },
+                    "alertflow_conditions": {
+                        "cpu_usage": 80,
+                        "ram_usage": 90,
+                        "interface_stats": 2000,
+                        "packet_loss": 5,
+                        "jitter": 100
+                    }
+                },
+                {
+                    "device_id": "r2",
+                    "device_metrics": {
+                        "cpu_usage": true,
+                        "ram_usage": false,
+                        "interface_stats": ["eth0", "eth3"]
+                    },
+                    "link_metrics": {
+                        "bandwidth": {
+                            "iperf": {
+                                "role": "server",
+                                "test_duration": 10,
+                                "frequency": 30
+                            }
+                        }
+                    },
+                    "alertflow_conditions": {
+                        "cpu_usage": 85,
+                        "ram_usage": 90,
+                        "interface_stats": 1500,
+                        "packet_loss": 3,
+                        "jitter": 120
+                    }
+                }
+            ]
+        }
+    ]
+}
