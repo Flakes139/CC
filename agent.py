@@ -5,7 +5,7 @@ from threading import Thread
 # Configurações
 UDP_PORT = 6667
 BROADCAST_PORT = 33333
-DESTINATION_ADDRESS = '255.255.255.255'
+DESTINATION_ADDRESS = '10.0.0.10'
 
 # Cliente UDP básico
 def udp_client():

@@ -1,7 +1,7 @@
 from socket import socket, AF_INET, SOCK_DGRAM 
 
 # Configurações do servidor UDP
-UDP_PORT = 6667
+UDP_PORT = 33333
 
 # Criação do socket UDP
 sock = socket(AF_INET, SOCK_DGRAM) 
