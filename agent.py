@@ -3,7 +3,7 @@ import time
 from threading import Thread
 
 # Configurações
-UDP_PORT = 6667
+UDP_PORT = 33333
 BROADCAST_PORT = 33333
 DESTINATION_ADDRESS = '10.0.0.10'
 
@@ -11,7 +11,7 @@ DESTINATION_ADDRESS = '10.0.0.10'
 def udp_client():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     msg = ("Hello you there!").encode('utf-8') 
-    s.sendto(msg, ('localhost', UDP_PORT))
+    s.sendto(msg, ('10.0.0.10', UDP_PORT))
     print(f"Mensagem enviada: {msg} para localhost porta {UDP_PORT}")
     s.close()
 

@@ -5,7 +5,7 @@ UDP_PORT = 33333
 
 # Criação do socket UDP
 sock = socket(AF_INET, SOCK_DGRAM) 
-sock.bind(('localhost', UDP_PORT))
+sock.bind(('10.0.0.10', UDP_PORT))
 
 print(f"Servidor ouvindo na porta UDP {UDP_PORT} (forever! Use Ctrl-C to parar)")
 try:
