@@ -4,58 +4,59 @@ from threading import Thread
 
 # Configurações
 UDP_PORT = 33333
-BROADCAST_PORT = 33333
+TCP_PORT = 44444
 DESTINATION_ADDRESS = '10.0.0.10'
 
-# Cliente UDP básico
+# Função para envio de mensagem via UDP
 def udp_client():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    msg = ("Hello you there!").encode('utf-8') 
-    s.sendto(msg, ('10.0.0.10', UDP_PORT))
-    print(f"Mensagem enviada: {msg} para localhost porta {UDP_PORT}")
+    msg = ("Hello via UDP!").encode('utf-8') 
+    s.sendto(msg, (DESTINATION_ADDRESS, UDP_PORT))
+    print(f"[UDP] Mensagem enviada: {msg} para {DESTINATION_ADDRESS} porta {UDP_PORT}")
     s.close()
 
-# Cliente-servidor UDP (envio e recepção contínuos)
-def udp_client_server():
-    # Criar socket UDP e configurar broadcast e reutilização de endereço
+# Função para recepção de mensagens via UDP
+def udp_receiver():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(('', BROADCAST_PORT))
+    sock.bind(('', UDP_PORT))
+    print(f"[UDP] Cliente ouvindo na porta UDP {UDP_PORT}")
+    while True:
+        message, address = sock.recvfrom(1024)
+        print(f"[UDP] Mensagem recebida: {message.decode()} de {address}")
 
-    # Função para enviar mensagens periodicamente
-    def send_message(msg):
-        while True:
-            print(f"Enviando mensagem: {msg} para {DESTINATION_ADDRESS} porta {BROADCAST_PORT}")
-            sock.sendto(msg, (DESTINATION_ADDRESS, BROADCAST_PORT))
-            time.sleep(1)
+# Função para envio de mensagem via TCP
+def tcp_client():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.connect((DESTINATION_ADDRESS, TCP_PORT))
+        msg = "Hello via TCP!"
+        s.send(msg.encode('utf-8'))
+        print(f"[TCP] Mensagem enviada: {msg} para {DESTINATION_ADDRESS} porta {TCP_PORT}")
+        response = s.recv(1024).decode('utf-8')
+        print(f"[TCP] Resposta recebida do servidor: {response}")
+    except ConnectionRefusedError:
+        print("[TCP] Não foi possível conectar ao servidor.")
+    finally:
+        s.close()
 
-    # Função para receber mensagens
-    def receive_message():
-        while True:
-            message, address = sock.recvfrom(1024)
-            print(f"Mensagem recebida: {message.decode()} de {address}")
-
-    # Criar threads para enviar e receber mensagens
-    message = ("HELLO!").encode('utf-8')
-    send_thread = Thread(target=send_message, args=(message,))
-    receive_thread = Thread(target=receive_message)
-    send_thread.start()
-    receive_thread.start()
-
-    # Aguardar o término das threads
-    send_thread.join()
-    receive_thread.join()
-
-# Executar o agente
+# Iniciar envio de mensagens UDP e TCP
 if __name__ == "__main__":
-    print("1. Enviar mensagem UDP básica")
-    print("2. Iniciar cliente-servidor UDP")
-    choice = input("Escolha a opção (1/2): ").strip()
+    # Enviar mensagem UDP
+    udp_client_thread = Thread(target=udp_client)
+    udp_receiver_thread = Thread(target=udp_receiver, daemon=True)
+    tcp_client_thread = Thread(target=tcp_client)
 
-    if choice == "1":
-        udp_client()
-    elif choice == "2":
-        udp_client_server()
-    else:
-        print("Opção inválida.")
+    udp_client_thread.start()
+    udp_receiver_thread.start()
+    tcp_client_thread.start()
+
+    # Esperar que os clientes terminem
+    udp_client_thread.join()
+    tcp_client_thread.join()
+
+    # Manter o programa ativo para recepção UDP
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\nCliente encerrado.")
