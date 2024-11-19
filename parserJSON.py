@@ -1,5 +1,8 @@
 import json
 
+# Caminho para o ficheiro JSON
+caminho_ficheiro = "teste.json"
+
 # Função para carregar o ficheiro JSON
 def carregar_json(caminho_ficheiro):
     try:
@@ -58,8 +61,6 @@ def processar_tarefas(dados):
             for condition, threshold in alert_conditions.items():
                 print(f"  - {condition.replace('_', ' ').capitalize()}: {threshold}")
 
-# Caminho para o ficheiro JSON
-caminho_ficheiro = "teste.json"
 
 # Carregar e processar o ficheiro JSON
 dados = carregar_json(caminho_ficheiro)
