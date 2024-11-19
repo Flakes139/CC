@@ -60,3 +60,26 @@ if __name__ == "__main__":
             time.sleep(1)
     except KeyboardInterrupt:
         print("\nCliente encerrado.")
+
+def register_agent(agent_id):
+    """
+    Registra o agente no servidor.
+    :param agent_id: ID único do agente.
+    """
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    msg = create_ativa_message(sequence=1, agent_id=agent_id)
+    s.sendto(msg, (DESTINATION_ADDRESS, UDP_PORT))
+    print(f"[NetTask] Registro enviado: {msg}")
+    response, _ = s.recvfrom(1024)
+    print(f"[NetTask] Resposta do servidor: {response}")
+    s.close()
+
+def process_received_task(msg):
+    """
+    Processa uma mensagem de tarefa recebida.
+    :param msg: Mensagem recebida.
+    """
+    decoded = decode_message(msg)
+    if decoded["type"] == "TASK":
+        print(f"[NetTask] Tarefa recebida: {decoded}")
+        # Aqui você pode iniciar a execução das métricas solicitadas

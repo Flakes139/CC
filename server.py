@@ -43,3 +43,31 @@ if __name__ == "__main__":
             pass
     except KeyboardInterrupt:
         print("\nServidores encerrados.")
+
+def process_registration(msg, addr):
+    """
+    Processa o registro do NMS_Agent.
+    :param msg: Mensagem recebida.
+    :param addr: Endereço do agente.
+    """
+    decoded = decode_message(msg)
+    if decoded["type"] == "ATIVA":
+        print(f"[NetTask] Agente registrado: ID {decoded['agent_id']} de {addr}")
+        response = create_ack_message(sequence=decoded["sequence"])
+        sock.sendto(response, addr)
+
+
+def send_task(agent_addr, sequence, task_data):
+    """
+    Envia uma tarefa para o agente.
+    :param agent_addr: Endereço do agente.
+    :param sequence: Número de sequência.
+    :param task_data: Dados da tarefa em JSON.
+    :Falta ler o Json
+    """
+    task_type = 1  # Exemplo: tipo de tarefa (CPU monitoramento) 
+    metric = 2  # Exemplo: métrica (RAM uso)
+    value = 80  # Exemplo: limite de 80%
+    task_msg = create_task_message(sequence, task_type, metric, value)
+    sock.sendto(task_msg, agent_addr)
+    print(f"[NetTask] Tarefa enviada para {agent_addr}: {task_msg}")
