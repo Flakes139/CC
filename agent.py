@@ -14,42 +14,33 @@ REGISTER_INTERVAL = 10  # Intervalo para reenvio do registro, se necessário
 
 
 def register_agent():
-    """
-    Envia uma mensagem ATIVA ao servidor e aguarda o ACK, com até 3 tentativas.
-    """
-    sequence = 1  # Número de sequência inicial
-    max_attempts = 3  # Número máximo de tentativas
-    attempt = 0  # Contador de tentativas
+    sequence = 1
+    max_attempts = 3
+    attempt = 0
 
-    # Criar mensagem ATIVA
+    # Criar mensagem ATIVA em binário
     message = mensagens.create_ativa_message(sequence, AGENT_ID)
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-        sock.settimeout(3)  # Tempo limite de 3 segundos para aguardar o ACK
+        sock.settimeout(3)
 
         while attempt < max_attempts:
-            # Enviar mensagem ATIVA
             sock.sendto(message, (DESTINATION_ADDRESS, UDP_PORT))
             print(f"[UDP] Mensagem ATIVA enviada (Tentativa {attempt + 1}) para {DESTINATION_ADDRESS}:{UDP_PORT}")
 
             try:
-                # Aguardar resposta (ACK)
-                response, _ = sock.recvfrom(1024)
-                decoded = mensagens.decode_message(response)
+                response, _ = sock.recvfrom(1024)  # Receber resposta em binário
+                decoded = mensagens.decode_message(response)  # Decodificar
 
-                # Verificar se o ACK foi recebido
                 if decoded["type"] == "ACK" and decoded["sequence"] == sequence:
                     print(f"[UDP] ACK recebido para sequência {sequence}. Registro confirmado.")
-                    return  # Encerra a função ao receber o ACK
+                    return
             except socket.timeout:
-                # Caso não receba resposta dentro do tempo limite
                 print(f"[UDP] Timeout aguardando ACK (Tentativa {attempt + 1}).")
 
-            # Incrementar tentativa
             attempt += 1
-            time.sleep(3)  # Aguardar 3 segundos antes da próxima tentativa
+            time.sleep(3)
 
-        # Se todas as tentativas falharem
         print("[UDP] Número máximo de tentativas atingido. Registro não foi confirmado.")
 
 def process_received_task(msg):
@@ -65,38 +56,24 @@ def process_received_task(msg):
 
 
 def udp_receiver():
-    """
-    Função para receber tarefas do servidor via UDP.
-    """
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(('', UDP_PORT))
-    print(f"[UDP] Cliente ouvindo na porta UDP {UDP_PORT} para receber tarefas")
+    print(f"[UDP] Cliente ouvindo na porta UDP {UDP_PORT}")
 
     while True:
-        message, address = sock.recvfrom(1024)
+        msg, addr = sock.recvfrom(1024)
+
         try:
-            data = json.loads(message.decode())
+            decoded = mensagens.decode_message(msg)  # Decodifica o binário
+            print(f"[UDP] Mensagem recebida de {addr}: {decoded}")
 
-            if data["message_type"] == "register_confirm":
-                print(f"[UDP] Registro confirmado pelo servidor para o agente {AGENT_ID}.")
-
-            elif data["message_type"] == "task_request":
-                print(f"[UDP] Tarefa recebida: {data['task']}")
-                task_id = data['task']['task_id']
-
-                # Enviar confirmação da tarefa
-                confirm_task_message = {
-                    "message_type": "task_confirm",
-                    "task_id": task_id,
-                    "agent_id": AGENT_ID
-                }
-                sock.sendto(json.dumps(confirm_task_message).encode('utf-8'), address)
-                print(f"[UDP] Confirmação de tarefa enviada para o servidor: {confirm_task_message}")
-
-                # Iniciar coleta de métricas
-                Thread(target=collect_and_send_metrics, args=(data['task'],)).start()
-        except json.JSONDecodeError:
-            print(f"[UDP] Mensagem inválida recebida de {address}: {message}")
+            if decoded["type"] == "TASK":
+                # Confirmar recebimento da tarefa
+                ack_message = mensagens.create_ack_message(decoded["sequence"])
+                sock.sendto(ack_message, addr)
+                print(f"[UDP] ACK enviado para {addr}")
+        except Exception as e:
+            print(f"[UDP] Erro ao processar mensagem de {addr}: {e}")
 
 
 def collect_and_send_metrics(task):
@@ -122,17 +99,19 @@ def collect_and_send_metrics(task):
 
 
 def tcp_client():
-    """
-    Envia uma mensagem para o servidor via TCP.
-    """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         s.connect((DESTINATION_ADDRESS, TCP_PORT))
-        msg = "Hello via TCP!"
-        s.send(msg.encode('utf-8'))
-        print(f"[TCP] Mensagem enviada: {msg} para {DESTINATION_ADDRESS} porta {TCP_PORT}")
-        response = s.recv(1024).decode('utf-8')
-        print(f"[TCP] Resposta recebida do servidor: {response}")
+        
+        # Criar mensagem em binário
+        message = mensagens.create_ativa_message(1, AGENT_ID)
+        s.send(message)
+        print(f"[TCP] Mensagem enviada para {DESTINATION_ADDRESS} porta {TCP_PORT}")
+
+        # Receber resposta
+        response = s.recv(1024)
+        decoded = mensagens.decode_message(response)
+        print(f"[TCP] Resposta recebida: {decoded}")
     except ConnectionRefusedError:
         print("[TCP] Não foi possível conectar ao servidor.")
     finally:

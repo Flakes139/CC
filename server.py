@@ -13,38 +13,31 @@ TASKS = {
     "metrics": ["cpu_usage", "ram_usage"]  # Exemplo de métricas
 }
 
-# Função para o servidor UDP
 def udp_server():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(('0.0.0.0', UDP_PORT))
     print(f"[UDP] Servidor ouvindo na porta UDP {UDP_PORT}")
-    while True:
-        msg, addr = sock.recvfrom(8192)
-        print(f"[UDP] Mensagem recebida de {addr}: {msg.decode()}")
-        sock.sendto(b"Mensagem recebida pelo servidor via UDP!", addr)
-        data = json.loads(msg.decode())
-         # Processamento de mensagens de registro de agente
-        if data["message_type"] == "register_request":
-            agent_id = data["agent_id"]
-            print(f"[UDP] Pedido de registro recebido de {agent_id} em {addr}")
-            
-            # Confirmação de registro
-            confirm_message = {
-                "message_type": "register_confirm",
-                "agent_id": agent_id
-            }
-            sock.sendto(json.dumps(confirm_message).encode('utf-8'), addr)
-            AGENTS[agent_id] = addr
-            print(f"[UDP] Registro confirmado para {agent_id}.")
-            
-            # Enviar tarefa ao agente
-            send_task(addr, sock, TASKS)
 
-        # Recepção de métricas de um agente
-        elif data["message_type"] == "metrics_data":
-            agent_id = data["agent_id"]
-            metrics = data["metrics"]
-            print(f"[UDP] Métricas recebidas de {agent_id}: {metrics}")
+    while True:
+        # Recebe mensagem em binário
+        msg, addr = sock.recvfrom(8192)
+
+        try:
+            decoded = mensagens.decode_message(msg)  # Decodifica o binário
+            print(f"[UDP] Mensagem recebida de {addr}: {decoded}")
+
+            if decoded["type"] == "ATIVA":
+                # Enviar ACK em resposta
+                ack_message = mensagens.create_ack_message(decoded["sequence"])
+                sock.sendto(ack_message, addr)
+                print(f"[UDP] ACK enviado para {addr}")
+
+            elif decoded["type"] == "TASK":
+                # Processar tarefas (adicionar lógica específica para mensagens TASK)
+                print(f"[UDP] Tarefa recebida: {decoded}")
+
+        except Exception as e:
+            print(f"[UDP] Erro ao processar mensagem de {addr}: {e}")
 
 
 # Função para o servidor TCP
@@ -53,12 +46,24 @@ def tcp_server():
     sock.bind(('0.0.0.0', TCP_PORT))
     sock.listen(5)
     print(f"[TCP] Servidor ouvindo na porta TCP {TCP_PORT}")
+
     while True:
         conn, addr = sock.accept()
         print(f"[TCP] Conexão recebida de {addr}")
-        msg = conn.recv(1024).decode('utf-8')
-        print(f"[TCP] Mensagem recebida: {msg}")
-        conn.send(b"Mensagem recebida pelo servidor via TCP!")
+
+        # Receber mensagem
+        msg = conn.recv(1024)
+        try:
+            decoded = mensagens.decode_message(msg)  # Decodifica o binário
+            print(f"[TCP] Mensagem recebida: {decoded}")
+
+            # Enviar resposta (binário)
+            ack_message = mensagens.create_ack_message(decoded["sequence"])
+            conn.send(ack_message)
+            print("[TCP] ACK enviado.")
+        except Exception as e:
+            print(f"[TCP] Erro ao processar mensagem de {addr}: {e}")
+
         conn.close()
 
 # Função para o servidor TCP
