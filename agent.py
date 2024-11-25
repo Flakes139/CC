@@ -54,27 +54,26 @@ def process_received_task(msg):
         # Aqui você pode iniciar a execução das métricas solicitadas
 
 
-
 def udp_receiver():
+    """
+    Função para receber mensagens do servidor via UDP.
+    """
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(('', UDP_PORT))
-    print(f"[UDP] Cliente ouvindo na porta UDP {UDP_PORT}")
+    print(f"[UDP] Cliente ouvindo na porta UDP {UDP_PORT} para receber mensagens")
 
     while True:
-        msg, addr = sock.recvfrom(1024)
-
+        # Recebe mensagem em binário
+        message, address = sock.recvfrom(1024)
         try:
-            decoded = mensagens.decode_message(msg)  # Decodifica o binário
-            print(f"[UDP] Mensagem recebida de {addr}: {decoded}")
+            decoded = mensagens.decode_message(message)
+            print(f"[UDP] Mensagem recebida de {address}: {decoded}")
 
-            if decoded["type"] == "TASK":
-                # Confirmar recebimento da tarefa
-                ack_message = mensagens.create_ack_message(decoded["sequence"])
-                sock.sendto(ack_message, addr)
-                print(f"[UDP] ACK enviado para {addr}")
+            if decoded["type"] == "ACK":
+                print(f"[UDP] ACK recebido para sequência {decoded['sequence']}.")
+
         except Exception as e:
-            print(f"[UDP] Erro ao processar mensagem de {addr}: {e}")
-
+            print(f"[UDP] Erro ao processar mensagem de {address}: {e}")
 
 def collect_and_send_metrics(task):
     """

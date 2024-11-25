@@ -21,9 +21,9 @@ def udp_server():
     while True:
         # Recebe mensagem em binário
         msg, addr = sock.recvfrom(8192)
-
         try:
-            decoded = mensagens.decode_message(msg)  # Decodifica o binário
+            # Decodifica a mensagem usando mensagens.decode_message
+            decoded = mensagens.decode_message(msg)
             print(f"[UDP] Mensagem recebida de {addr}: {decoded}")
 
             if decoded["type"] == "ATIVA":
@@ -33,12 +33,11 @@ def udp_server():
                 print(f"[UDP] ACK enviado para {addr}")
 
             elif decoded["type"] == "TASK":
-                # Processar tarefas (adicionar lógica específica para mensagens TASK)
+                # Processar mensagens do tipo TASK
                 print(f"[UDP] Tarefa recebida: {decoded}")
 
         except Exception as e:
             print(f"[UDP] Erro ao processar mensagem de {addr}: {e}")
-
 
 # Função para o servidor TCP
 def tcp_server():
