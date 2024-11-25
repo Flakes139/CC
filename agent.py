@@ -1,16 +1,25 @@
 import socket
-import json
 import time
 from threading import Thread
-import psutil
 import mensagens
+import psutil
 
-# Configurações
-UDP_PORT = 33333
-TCP_PORT = 44444
-DESTINATION_ADDRESS = '10.0.0.10'
-AGENT_ID = 42  # ID do agente
-REGISTER_INTERVAL = 10  # Intervalo para reenvio do registro, se necessário
+# Configurações que serão fornecidas pelo usuário
+UDP_PORT = None
+TCP_PORT = None
+DESTINATION_ADDRESS = None
+AGENT_ID = None
+
+
+def initialize_agent():
+    """
+    Inicializa o agente com entradas do usuário.
+    """
+    global DESTINATION_ADDRESS, UDP_PORT, TCP_PORT, AGENT_ID
+    DESTINATION_ADDRESS = input("Digite o IP do servidor: ").strip()
+    UDP_PORT = int(input("Digite a porta UDP do servidor: ").strip())
+    TCP_PORT = int(input("Digite a porta TCP do servidor: ").strip())
+    AGENT_ID = int(input("Digite o ID do agente: ").strip())
 
 
 def register_agent():
@@ -29,8 +38,8 @@ def register_agent():
             print(f"[UDP] Mensagem ATIVA enviada (Tentativa {attempt + 1}) para {DESTINATION_ADDRESS}:{UDP_PORT}")
 
             try:
-                response, _ = sock.recvfrom(1024)  # Receber resposta em binário
-                decoded = mensagens.decode_message(response)  # Decodificar
+                response, _ = sock.recvfrom(1024)
+                decoded = mensagens.decode_message(response)
 
                 if decoded["type"] == "ACK" and decoded["sequence"] == sequence:
                     print(f"[UDP] ACK recebido para sequência {sequence}. Registro confirmado.")
@@ -43,16 +52,7 @@ def register_agent():
 
         print("[UDP] Número máximo de tentativas atingido. Registro não foi confirmado.")
 
-def process_received_task(msg):
-    """
-    Processa uma mensagem de tarefa recebida.
-    :param msg: Mensagem recebida.
-    """
-    decoded = mensagens.decode_message(msg)
-    if decoded["type"] == "TASK":
-        print(f"[NetTask] Tarefa recebida: {decoded}")
-        collect_and_send_metrics(decoded) # iniciar coleta de métricas
-        
+
 def udp_receiver():
     """
     Função para receber mensagens do servidor via UDP.
@@ -62,51 +62,25 @@ def udp_receiver():
     print(f"[UDP] Cliente ouvindo na porta UDP {UDP_PORT} para receber mensagens")
 
     while True:
-        # Recebe mensagem em binário
         message, address = sock.recvfrom(1024)
         try:
             decoded = mensagens.decode_message(message)
             print(f"[UDP] Mensagem recebida de {address}: {decoded}")
-
-            if decoded["type"] == "ACK":
-                print(f"[UDP] ACK recebido para sequência {decoded['sequence']}.")
-
         except Exception as e:
             print(f"[UDP] Erro ao processar mensagem de {address}: {e}")
 
-def collect_and_send_metrics(task):
-    """
-    Coleta métricas do sistema e envia ao servidor periodicamente.
-    """
-    frequency = task.get("frequency", 20)
-    while True:
-        metrics = {
-            "cpu_usage": psutil.cpu_percent(interval=1),
-            "ram_usage": psutil.virtual_memory().percent
-        }
-        metrics_message = {
-            "message_type": "metrics_data",
-            "agent_id": AGENT_ID,
-            "task_id": task["task_id"],
-            "metrics": metrics
-        }
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-            s.sendto(json.dumps(metrics_message).encode('utf-8'), (DESTINATION_ADDRESS, UDP_PORT))
-            print(f"[UDP] Métricas enviadas: {metrics_message}")
-        time.sleep(frequency)
-
 
 def tcp_client():
+    """
+    Envia uma mensagem para o servidor via TCP.
+    """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         s.connect((DESTINATION_ADDRESS, TCP_PORT))
-        
-        # Criar mensagem em binário
         message = mensagens.create_ativa_message(1, AGENT_ID)
         s.send(message)
-        print(f"[TCP] Mensagem enviada para {DESTINATION_ADDRESS} porta {TCP_PORT}")
+        print(f"[TCP] Mensagem enviada para {DESTINATION_ADDRESS}:{TCP_PORT}")
 
-        # Receber resposta
         response = s.recv(1024)
         decoded = mensagens.decode_message(response)
         print(f"[TCP] Resposta recebida: {decoded}")
@@ -117,6 +91,9 @@ def tcp_client():
 
 
 if __name__ == "__main__":
+    # Inicializa o agente com inputs do usuário
+    initialize_agent()
+
     # Realizar registro com tentativas
     register_agent()
 
