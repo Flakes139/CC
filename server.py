@@ -109,22 +109,37 @@ def process_registration(sock, msg, addr):
     """
     decoded = mensagens.decode_message(msg)
     if decoded["type"] == "ATIVA":
-        print(f"[NetTask] Agente registrado: ID {decoded['agent_id']} de {addr}")
+        agent_id = decoded['agent_id']
+        
+        if agent_id not in AGENTS:
+            AGENTS[agent_id] = addr  # Armazena endereço do agente
+            print(f"[NetTask] Agente registrado: ID {agent_id} de {addr}")
+        else:
+            print(f"[NetTask] Agente {agent_id} já registrado.")
+
+        # Enviar ACK ao agente
         response = mensagens.create_ack_message(sequence=decoded["sequence"])
         sock.sendto(response, addr)
 
 
-def send_task(sock, agent_addr, sequence, task_data):
+def send_task(sock, agent_id, sequence, task_data):
     """
-    Envia uma tarefa para o agente.
-    :param agent_addr: Endereço do agente.
-    :param sequence: Número de sequência.
-    :param task_data: Dados da tarefa em JSON.
-    :Falta ler o Json
+    Envia uma tarefa para o agente especificado.
+    :param sock: Socket para enviar a mensagem.
+    :param agent_id: ID do agente para o qual a tarefa será enviada.
+    :param sequence: Número de sequência da mensagem.
+    :param task_data: Dados da tarefa (exemplo: dict com task_id, frequency, metrics).
     """
-    task_type = 1  # Exemplo: tipo de tarefa (CPU monitoramento) 
-    metric = 2  # Exemplo: métrica (RAM uso)
-    value = 80  # Exemplo: limite de 80%
-    task_msg = mensagens.create_task_message(sequence, task_type, metric, value)
+    if agent_id not in AGENTS:
+        print(f"[NetTask] Agente {agent_id} não encontrado para envio de tarefa.")
+        return
+
+    # Recupera o endereço do agente registrado
+    agent_addr = AGENTS[agent_id]
+
+    # Cria a mensagem de tarefa usando o módulo mensagens
+    task_msg = mensagens.create_task_message(sequence, task_data)
+    
+    # Envia a mensagem para o agente
     sock.sendto(task_msg, agent_addr)
     print(f"[NetTask] Tarefa enviada para {agent_addr}: {task_msg}")

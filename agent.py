@@ -51,9 +51,8 @@ def process_received_task(msg):
     decoded = mensagens.decode_message(msg)
     if decoded["type"] == "TASK":
         print(f"[NetTask] Tarefa recebida: {decoded}")
-        # Aqui você pode iniciar a execução das métricas solicitadas
-
-
+        collect_and_send_metrics(decoded) # iniciar coleta de métricas
+        
 def udp_receiver():
     """
     Função para receber mensagens do servidor via UDP.
