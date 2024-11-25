@@ -36,6 +36,12 @@ def udp_server():
                 # Processar mensagens do tipo TASK
                 print(f"[UDP] Tarefa recebida: {decoded}")
 
+            # Chama a função process_registration e passa o sock para ela
+            process_registration(sock, addr, msg)  # Passando sock como parâmetro
+
+            # Enviar tarefa para o agente
+            send_task(sock, addr, decoded["sequence"], TASKS)  # Passando sock como parâmetro
+
         except Exception as e:
             print(f"[UDP] Erro ao processar mensagem de {addr}: {e}")
 
@@ -95,20 +101,20 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\nServidores encerrados.")
 
-def process_registration(msg, addr):
+def process_registration(sock, msg, addr):
     """
     Processa o registro do NMS_Agent.
     :param msg: Mensagem recebida.
     :param addr: Endereço do agente.
     """
-    decoded = decode_message(msg)
+    decoded = mensagens.decode_message(msg)
     if decoded["type"] == "ATIVA":
         print(f"[NetTask] Agente registrado: ID {decoded['agent_id']} de {addr}")
-        response = create_ack_message(sequence=decoded["sequence"])
+        response = mensagens.create_ack_message(sequence=decoded["sequence"])
         sock.sendto(response, addr)
 
 
-def send_task(agent_addr, sequence, task_data):
+def send_task(sock, agent_addr, sequence, task_data):
     """
     Envia uma tarefa para o agente.
     :param agent_addr: Endereço do agente.
@@ -119,6 +125,6 @@ def send_task(agent_addr, sequence, task_data):
     task_type = 1  # Exemplo: tipo de tarefa (CPU monitoramento) 
     metric = 2  # Exemplo: métrica (RAM uso)
     value = 80  # Exemplo: limite de 80%
-    task_msg = create_task_message(sequence, task_type, metric, value)
+    task_msg = mensagens.create_task_message(sequence, task_type, metric, value)
     sock.sendto(task_msg, agent_addr)
     print(f"[NetTask] Tarefa enviada para {agent_addr}: {task_msg}")
