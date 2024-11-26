@@ -2,7 +2,6 @@ import socket
 import time
 from threading import Thread
 import mensagens
-import psutil
 
 # Configurações que serão fornecidas pelo usuário
 UDP_PORT = None

@@ -3,17 +3,59 @@
         {
             "task_id": "task-202",
             "frequency": 20,
-            "metrics": ["cpu_usage", "ram_usage"],
             "devices": [
                 {
-                    "device_id": "r1",
+                    "device_id": "1",
                     "device_metrics": {
                         "cpu_usage": true,
-                        "ram_usage": true
+                        "ram_usage": true,
+                        "interface_stats": []
                     },
+                    "link_metrics": {},
                     "alertflow_conditions": {
                         "cpu_usage": 80,
                         "ram_usage": 90
+                    }
+                },
+                {
+                    "device_id": "2",
+                    "device_metrics": {
+                        "cpu_usage": false,
+                        "ram_usage": false,
+                        "interface_stats": []
+                    },
+                    "link_metrics": {
+                        "latency": {
+                            "ping": {
+                                "destination": "8.8.8.8",
+                                "packet_count": 5,
+                                "frequency": 30
+                            }
+                        }
+                    },
+                    "alertflow_conditions": {
+                        "latency": 100
+                    }
+                },
+                {
+                    "device_id": "3",
+                    "device_metrics": {
+                        "cpu_usage": false,
+                        "ram_usage": false,
+                        "interface_stats": []
+                    },
+                    "link_metrics": {
+                        "bandwidth": {
+                            "iperf": {
+                                "role": "client",
+                                "test_duration": 10,
+                                "transport": "tcp",
+                                "frequency": 30
+                            }
+                        }
+                    },
+                    "alertflow_conditions": {
+                        "bandwidth": 50
                     }
                 }
             ]
