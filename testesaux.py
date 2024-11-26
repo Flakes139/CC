@@ -45,16 +45,14 @@ def ping_and_store(host, count):
             "max_time": float(stats.group(3)) if stats else None,
             "mdev_time": float(stats.group(4)) if stats else None,
         }
-        
-        ping_data = ping_and_store(host, 4)
-        if ping_data:
-            print("\nResultado do Ping:")
-            print(f"  Host: {host}")
-            print(f"  Tempos individuais (ms): {ping_data['times']}")
-            print(f"  Perda de pacotes: {ping_data['packet_loss']}%")                
-            print(f"  Tempo mínimo: {ping_data['min_time']} ms")
-            print(f"  Tempo médio: {ping_data['avg_time']} ms")
-            print(f"  Tempo máximo: {ping_data['max_time']} ms")
+
+        print("\nResultado do Ping:")
+        print(f"  Host: {host}")
+        print(f"  Tempos individuais (ms): {data['times']}")
+        print(f"  Perda de pacotes: {data['packet_loss']}%")                
+        print(f"  Tempo mínimo: {data['min_time']} ms")
+        print(f"  Tempo médio: {data['avg_time']} ms")
+        print(f"  Tempo máximo: {data['max_time']} ms")
         print()
     
     except Exception as e:
