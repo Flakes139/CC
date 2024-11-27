@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
     register_agent(server_ip, udp_port, agent_id)
 
-    udp_receiver_thread = Thread(target=udp_receiver, args=(udp_port,), daemon=True)
+    udp_receiver_thread = Thread(target=udp_receiver, args=(server_ip,udp_port,), daemon=True)
     udp_receiver_thread.start()
 
     try:
