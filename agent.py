@@ -53,9 +53,9 @@ def register_agent(server_ip, udp_port, agent_id):
         print("[UDP] Número máximo de tentativas atingido. Registro não foi confirmado.")
 
 
-def udp_receiver(udp_port):
+def udp_receiver(udp_port, server_ip, tcp_port):
     """
-    Recebe mensagens do servidor via UDP.
+    Recebe mensagens do servidor via UDP e envia um ACK de confirmação.
     """
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(('', udp_port))
@@ -69,8 +69,16 @@ def udp_receiver(udp_port):
             decoded = mensagens.decode_message(message)
             print(f"[DEBUG] Mensagem decodificada: {decoded}")
 
+            if decoded["type"] == "TASK":
+                print(f"[UDP] Tarefa recebida: {decoded}")
+
+                # Criar mensagem de ACK para a tarefa
+                ack_message = mensagens.create_ack_message(decoded["sequence"])
+                sock.sendto(ack_message, (server_ip, udp_port))
+                print(f"[UDP] ACK enviado para o servidor em {server_ip}:{udp_port}")
         except Exception as e:
             print(f"[UDP] Erro ao processar mensagem de {address}: {e}")
+
 
 
 if __name__ == "__main__":

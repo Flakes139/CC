@@ -23,7 +23,6 @@ def initialize_server():
 
     return udp_port, tcp_port
 
-
 def udp_server(udp_port):
     """
     Servidor UDP que recebe mensagens de agentes e processa.
@@ -35,13 +34,13 @@ def udp_server(udp_port):
     while True:
         msg, addr = sock.recvfrom(8192)
         try:
-            # Decodifica a mensagem usando mensagens.decode_message
             decoded = mensagens.decode_message(msg)
             print(f"[UDP] Mensagem recebida de {addr}: {decoded}")
 
             if decoded["type"] == "ATIVA":
                 process_registration(sock, addr, decoded)
-
+            elif decoded["type"] == "ACK":
+                print(f"[NetTask] ACK recebido do agente {addr}.")
         except Exception as e:
             print(f"[UDP] Erro ao processar mensagem de {addr}: {e}")
 
