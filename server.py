@@ -81,7 +81,6 @@ def send_task_to_agent(sock, agent_id, addr):
     # Criar mensagem de tarefa em binário
     task_message = mensagens.create_task_message(
         sequence=1,
-        device_id=task["device_id"],
         metrics=task["device_metrics"],
         link_metrics=task["link_metrics"],
         alert_conditions=task["alertflow_conditions"]
