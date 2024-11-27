@@ -2,8 +2,10 @@ import socket
 import json
 from threading import Thread
 import mensagens
+from parserJSON import carregar_tarefas
 
-AGENTS = {}  # Dicionário para armazenar agentes registrados
+AGENTS = {}  # Dicionário para armazenar agentes registrados e seus IPs
+TASKS = []  # Lista de tarefas carregadas do JSON
 
 
 def initialize_server():
@@ -12,6 +14,13 @@ def initialize_server():
     """
     udp_port = int(input("Digite a porta UDP: ").strip())
     tcp_port = int(input("Digite a porta TCP: ").strip())
+    json_path = input("Digite o caminho para o arquivo JSON de configuração: ").strip()
+
+    # Carregar tarefas do JSON
+    global TASKS
+    TASKS = carregar_tarefas(json_path)
+    print(f"[Servidor] Tarefas carregadas: {TASKS}")
+
     return udp_port, tcp_port
 
 
@@ -24,92 +33,76 @@ def udp_server(udp_port):
     print(f"[UDP] Servidor ouvindo na porta UDP {udp_port}")
 
     while True:
+        msg, addr = sock.recvfrom(8192)
         try:
-            msg, addr = sock.recvfrom(8192)
-            print(f"[DEBUG] Mensagem recebida bruta de {addr}: {msg}")  # Debug da mensagem recebida
-
+            # Decodifica a mensagem usando mensagens.decode_message
             decoded = mensagens.decode_message(msg)
-            print(f"[DEBUG] Mensagem decodificada: {decoded}")  # Debug da mensagem decodificada
+            print(f"[UDP] Mensagem recebida de {addr}: {decoded}")
 
-            # Processa o registro ou outras ações
             if decoded["type"] == "ATIVA":
                 process_registration(sock, addr, decoded)
 
-            elif decoded["type"] == "TASK":
-                print(f"[UDP] Tarefa recebida: {decoded}")
-
         except Exception as e:
-            print(f"[UDP] Erro ao processar mensagem: {e}")
-
-
-def tcp_server(tcp_port):
-    """
-    Servidor TCP que recebe conexões e processa mensagens.
-    """
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(('0.0.0.0', tcp_port))
-    sock.listen(5)
-    print(f"[TCP] Servidor ouvindo na porta TCP {tcp_port}")
-
-    while True:
-        try:
-            conn, addr = sock.accept()
-            print(f"[TCP] Conexão recebida de {addr}")
-
-            msg = conn.recv(1024)
-            print(f"[DEBUG] Mensagem recebida (binária) de {addr}: {msg}")
-
-            decoded = mensagens.decode_message(msg)
-            print(f"[DEBUG] Mensagem decodificada de {addr}: {decoded}")
-
-            ack_message = mensagens.create_ack_message(decoded["sequence"])
-            conn.send(ack_message)
-            print("[TCP] ACK enviado.")
-
-        except Exception as e:
-            print(f"[TCP] Erro ao processar mensagem de {addr}: {e}")
+            print(f"[UDP] Erro ao processar mensagem de {addr}: {e}")
 
 
 def process_registration(sock, addr, decoded):
     """
-    Processa o registro do agente e envia um ACK de confirmação.
+    Processa o registro do agente, armazena seu IP e envia um ACK de confirmação.
+    Em seguida, envia as tarefas correspondentes com base no JSON.
     """
-    try:
-        agent_id = decoded.get('agent_id')
-        sequence = decoded.get('sequence')
+    agent_id = decoded.get('agent_id')
+    if agent_id not in AGENTS:
+        AGENTS[agent_id] = addr  # Armazena endereço do agente
+        print(f"[NetTask] Agente registrado: ID {agent_id} de {addr}")
+    else:
+        print(f"[NetTask] Agente {agent_id} já registrado.")
 
-        if agent_id is None or sequence is None:
-            print(f"[DEBUG] Mensagem ATIVA incompleta: {decoded}")
-            return
+    # Enviar ACK ao agente
+    ack_message = mensagens.create_ack_message(decoded["sequence"])
+    sock.sendto(ack_message, addr)
+    print(f"[UDP] ACK enviado para {addr}")
 
-        # Registrar o agente
-        if agent_id not in AGENTS:
-            AGENTS[agent_id] = addr
-            print(f"[NetTask] Agente registrado: ID {agent_id} de {addr}")
-        else:
-            print(f"[NetTask] Agente {agent_id} já registrado. Endereço: {AGENTS[agent_id]}")
+    # Enviar tarefa ao agente
+    send_task_to_agent(sock, agent_id, addr)
 
-        # Enviar ACK
-        ack_message = mensagens.create_ack_message(sequence)
-        print(f"[DEBUG] Enviando ACK para {addr}: {ack_message}")
-        sock.sendto(ack_message, addr)
 
-    except Exception as e:
-        print(f"[NetTask] Erro ao processar registro: {e}")
+def send_task_to_agent(sock, agent_id, addr):
+    """
+    Envia as tarefas associadas ao agente com base no JSON.
+    """
+    # Buscar as informações do agente no JSON
+    task = next((t for t in TASKS if str(t["device_id"]) == str(agent_id)), None)
+
+    if not task:
+        print(f"[NetTask] Nenhuma tarefa encontrada para o agente ID {agent_id}.")
+        return
+
+    # Criar mensagem de tarefa em binário
+    task_message = mensagens.create_task_message(
+        sequence=1,
+        device_id=task["device_id"],
+        metrics=task["device_metrics"],
+        link_metrics=task["link_metrics"],
+        alert_conditions=task["alertflow_conditions"]
+    )
+
+    # Enviar a mensagem para o agente
+    sock.sendto(task_message, addr)
+    print(f"[NetTask] Tarefa enviada para o agente ID {agent_id} em {addr}: {task_message}")
 
 
 if __name__ == "__main__":
+    # Inicializa o servidor pedindo as portas ao usuário
     udp_port, tcp_port = initialize_server()
 
+    # Inicia threads para os servidores UDP e TCP
     udp_server_thread = Thread(target=udp_server, args=(udp_port,), daemon=True)
-    tcp_server_thread = Thread(target=tcp_server, args=(tcp_port,), daemon=True)
-
     udp_server_thread.start()
-    tcp_server_thread.start()
 
-    print("Servidores UDP e TCP rodando simultaneamente. Pressione Ctrl+C para encerrar.")
+    print("Servidor rodando. Pressione Ctrl+C para encerrar.")
     try:
         while True:
             pass
     except KeyboardInterrupt:
-        print("\nServidores encerrados.")
+        print("\nServidor encerrado.")

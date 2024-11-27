@@ -66,3 +66,15 @@ def processar_tarefas(dados):
 dados = carregar_json(caminho_ficheiro)
 if dados:
     processar_tarefas(dados)
+
+def carregar_tarefas(caminho_ficheiro):
+    """
+    Carrega as tarefas do arquivo JSON.
+    """
+    try:
+        with open(caminho_ficheiro, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return data.get("tasks", [])[0]["devices"]
+    except Exception as e:
+        print(f"[Erro] Falha ao carregar o JSON: {e}")
+        return []
