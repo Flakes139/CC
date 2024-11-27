@@ -4,7 +4,7 @@ from threading import Thread
 import mensagens
 from parserJSON import carregar_tarefas
 
-AGENTS = {}  # Dicionário para armazenar agentes registrados e seus IPs
+AGENTS = {}  # Dicionário para armazenar agentes registrados e seus IPs e portas
 TASKS = []  # Lista de tarefas carregadas do JSON
 
 
@@ -49,15 +49,16 @@ def udp_server(udp_port):
 
 def process_registration(sock, addr, decoded):
     """
-    Processa o registro do agente, armazena seu IP e envia um ACK de confirmação.
+    Processa o registro do agente, armazena seu IP e porta, e envia um ACK de confirmação.
     Em seguida, envia as tarefas correspondentes com base no JSON.
     """
     agent_id = decoded.get('agent_id')
+    agent_port = decoded.get('agent_port')  # Porta que o agente enviou no registro
     if agent_id not in AGENTS:
-        AGENTS[agent_id] = addr  # Armazena endereço do agente
-        print(f"[NetTask] Agente registrado: ID {agent_id} de {addr}")
+        AGENTS[agent_id] = (addr[0], agent_port)  # Armazena IP e porta do agente
+        print(f"[NetTask] Agente registrado: ID {agent_id} em {(addr[0], agent_port)}")
     else:
-        print(f"[NetTask] Agente {agent_id} já registrado.")
+        print(f"[NetTask] Agente {agent_id} já registrado em {AGENTS[agent_id]}")
 
     # Enviar ACK ao agente
     ack_message = mensagens.create_ack_message(decoded["sequence"])
@@ -65,10 +66,10 @@ def process_registration(sock, addr, decoded):
     print(f"[UDP] ACK enviado para {addr}")
 
     # Enviar tarefa ao agente
-    send_task_to_agent(sock, agent_id, addr)
+    send_task_to_agent(sock, agent_id)
 
 
-def send_task_to_agent(sock, agent_id, addr):
+def send_task_to_agent(sock, agent_id):
     """
     Envia as tarefas associadas ao agente com base no JSON.
     """
@@ -89,9 +90,10 @@ def send_task_to_agent(sock, agent_id, addr):
         )
         print(f"[DEBUG] Tamanho da mensagem de tarefa: {len(task_message)}")
 
-        # Enviar a mensagem para o agente
-        sock.sendto(task_message, addr)
-        print(f"[NetTask] Tarefa enviada para o agente ID {agent_id} em {addr}: {task_message}")
+        # Recuperar IP e porta do agente
+        agent_addr = AGENTS[agent_id]
+        sock.sendto(task_message, agent_addr)
+        print(f"[NetTask] Tarefa enviada para o agente ID {agent_id} em {agent_addr}: {task_message}")
     except KeyError as e:
         print(f"[NetTask] Erro ao criar mensagem de tarefa para o agente ID {agent_id}: {e}")
     except Exception as e:
@@ -99,10 +101,8 @@ def send_task_to_agent(sock, agent_id, addr):
 
 
 if __name__ == "__main__":
-    # Inicializa o servidor pedindo a porta UDP ao usuário
     udp_port = initialize_server()
 
-    # Inicia o servidor UDP em uma thread
     udp_server_thread = Thread(target=udp_server, args=(udp_port,), daemon=True)
     udp_server_thread.start()
 
