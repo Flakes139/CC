@@ -62,28 +62,35 @@ def udp_server(udp_port):
         except Exception as e:
             print(f"[UDP] Erro ao processar mensagem de {addr}: {e}")
 
-
-def process_registration(sock, addr, decoded):
+def process_registration(sock, addr, msg):
     """
-    Processa o registro do agente e envia as métricas do JSON ao agente registrado.
+    Processa o registro do agente e envia um ACK de confirmação.
     """
-    agent_id = decoded.get("agent_id")
-    sequence = decoded.get("sequence")
+    decoded = mensagens.decode_message(msg)
+    agent_id = decoded.get('agent_id')
+    sequence = decoded.get('sequence')  # Obtém a sequência da mensagem
 
     if agent_id not in AGENTS:
-        # Armazenar ID e endereço do agente
-        AGENTS[agent_id] = {"address": addr, "metrics": TASKS.get(agent_id, {})}
+        AGENTS[agent_id] = addr
         print(f"[NetTask] Agente registrado: ID {agent_id} de {addr}")
     else:
         print(f"[NetTask] Agente {agent_id} já registrado.")
 
-    # Enviar ACK ao agente
+    # Envia um ACK ao agente
     ack_message = mensagens.create_ack_message(sequence)
     sock.sendto(ack_message, addr)
     print(f"[UDP] ACK enviado para {addr}")
 
-    # Enviar mensagem TASK ao agente com as métricas associadas
-    send_task(sock, agent_id)
+    # Obtém os dados da tarefa para o agente
+    task_data = next(
+        (task for task in TASKS if task["device_id"] == str(agent_id)),
+        None
+    )
+
+    if task_data:
+        # Envia a mensagem de tarefa ao agente
+        send_task(sock, agent_id, sequence, task_data)
+
 
 def send_task(sock, agent_id, sequence, task_data):
     """
