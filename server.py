@@ -87,6 +87,7 @@ def send_task_to_agent(sock, agent_id, addr):
             link_metrics=task["link_metrics"],
             alert_conditions=task["alertflow_conditions"]
         )
+        print(f"[DEBUG] Tamanho da mensagem de tarefa: {len(task_message)}")
 
         # Enviar a mensagem para o agente
         sock.sendto(task_message, addr)
