@@ -6,7 +6,7 @@ import mensagens
 
 def initialize_agent():
     """
-    Solicita ao usuário o IP do servidor, porta UDP e ID do agente.
+    Solicita ao usuário o IP do servidor, portas UDP/TCP e ID do agente.
     """
     server_ip = input("Digite o IP do servidor: ").strip()
     udp_port = int(input("Digite a porta UDP do servidor: ").strip())
@@ -53,9 +53,9 @@ def register_agent(server_ip, udp_port, agent_id):
         print("[UDP] Número máximo de tentativas atingido. Registro não foi confirmado.")
 
 
-def udp_receiver(udp_port, server_ip):
+def udp_receiver(udp_port):
     """
-    Recebe mensagens do servidor via UDP e envia um ACK de confirmação.
+    Recebe mensagens do servidor via UDP e imprime as tarefas.
     """
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(('', udp_port))
@@ -70,25 +70,23 @@ def udp_receiver(udp_port, server_ip):
             print(f"[DEBUG] Mensagem decodificada: {decoded}")
 
             if decoded["type"] == "TASK":
-                print(f"[UDP] Tarefa recebida: {decoded}")
+                print(f"[UDP] Tarefa recebida do servidor: {decoded}")
 
                 # Criar mensagem de ACK para a tarefa
                 ack_message = mensagens.create_ack_message(decoded["sequence"])
-                sock.sendto(ack_message, (server_ip, udp_port))
-                print(f"[UDP] ACK enviado para o servidor em {server_ip}:{udp_port}")
+                sock.sendto(ack_message, address)
+                print(f"[UDP] ACK enviado para o servidor em {address}")
         except Exception as e:
             print(f"[UDP] Erro ao processar mensagem de {address}: {e}")
 
 
 if __name__ == "__main__":
-    # Solicita os dados de inicialização
     server_ip, udp_port, agent_id = initialize_agent()
 
-    # Realiza registro do agente
     register_agent(server_ip, udp_port, agent_id)
 
-    # Inicia o receptor UDP em uma thread
-    udp_receiver_thread = Thread(target=udp_receiver, args=(udp_port, server_ip), daemon=True)
+    # Thread para receber mensagens UDP do servidor
+    udp_receiver_thread = Thread(target=udp_receiver, args=(udp_port,), daemon=True)
     udp_receiver_thread.start()
 
     try:
