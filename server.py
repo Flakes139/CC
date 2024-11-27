@@ -85,26 +85,22 @@ def process_registration(sock, addr, decoded):
     # Enviar mensagem TASK ao agente com as métricas associadas
     send_task(sock, agent_id)
 
-
-def send_task(sock, agent_id):
+def send_task(sock, agent_id, sequence, task_data):
     """
-    Envia uma mensagem TASK para o agente com as métricas definidas no JSON.
+    Envia uma mensagem TASK para o agente especificado.
+    :param sock: Socket para envio.
+    :param agent_id: ID do agente (device_id).
+    :param sequence: Número da sequência.
+    :param task_data: Dados do JSON para o agente.
     """
-    agent = AGENTS.get(agent_id)
-    if not agent:
-        print(f"[NetTask] Agente {agent_id} não encontrado.")
+    if agent_id not in AGENTS:
+        print(f"[NetTask] Agente {agent_id} não registrado.")
         return
 
-    addr = agent["address"]
-    metrics = agent["metrics"]
-
-    # Criar mensagem TASK com base nas métricas do JSON
-    task_message = mensagens.create_task_message(
-        sequence=1,  # Pode usar um contador ou outra lógica
-        metrics=metrics
-    )
-    sock.sendto(task_message, addr)
-    print(f"[NetTask] Mensagem TASK enviada para {addr}: {metrics}")
+    addr = AGENTS[agent_id]
+    message = create_task_message(agent_id, sequence, task_data)
+    sock.sendto(message, addr)
+    print(f"[NetTask] Mensagem TASK enviada para {addr}: {message}")
 
 
 if __name__ == "__main__":

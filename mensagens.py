@@ -29,17 +29,52 @@ def create_ack_message(sequence):
     return struct.pack("!BB", message_type, sequence)
 
 # Função para criar uma mensagem TASK
-def create_task_message(sequence, task_type, metric, value):
+def create_task_message(agent_id, sequence, task_data):
     """
-    Cria uma mensagem de tarefa (TASK).
-    :param sequence: Número de sequência (1 byte).
-    :param task_type: Tipo da tarefa (1 byte).
-    :param metric: Métrica a ser monitorada (1 byte).
-    :param value: Valor associado à métrica (1 byte).
-    :return: Mensagem serializada (5 bytes).
+    Cria uma mensagem TASK personalizada para cada agente com base nas métricas no JSON.
+    :param agent_id: ID do agente (device_id).
+    :param sequence: Número da sequência da mensagem.
+    :param task_data: Dicionário com os dados da tarefa para o agente.
+    :return: Mensagem serializada (binária).
     """
-    message_type = MESSAGE_TYPES["TASK"]
-    return struct.pack("!BBBBB", message_type, sequence, task_type, metric, value)
+    # Tipo da mensagem (TASK)
+    msg_type = 0x03  # TASK
+    
+    # Frequência da tarefa
+    frequency = task_data["frequency"]
+
+    # Iniciar a mensagem com tipo e sequência
+    message = struct.pack("!BB", msg_type, sequence)
+
+    if agent_id == "1":
+        # CPU e RAM métricas
+        cpu_active = 1 if task_data["device_metrics"]["cpu_usage"] else 0
+        ram_active = 1 if task_data["device_metrics"]["ram_usage"] else 0
+        cpu_threshold = task_data["alertflow_conditions"]["cpu_usage"]
+        ram_threshold = task_data["alertflow_conditions"]["ram_usage"]
+
+        message += struct.pack("!BBBHH", frequency, cpu_active, ram_active, cpu_threshold, ram_threshold)
+
+    elif agent_id == "2":
+        # Latência (Ping)
+        ping_active = 1
+        ping_dest = socket.inet_aton(task_data["link_metrics"]["latency"]["ping"]["destination"])
+        packet_count = task_data["link_metrics"]["latency"]["ping"]["packet_count"]
+        latency_threshold = task_data["alertflow_conditions"]["latency"]
+
+        message += struct.pack("!BB4sBH", frequency, ping_active, ping_dest, packet_count, latency_threshold)
+
+    elif agent_id == "3":
+        # Bandwidth (iperf)
+        bandwidth_active = 1
+        role = 1 if task_data["link_metrics"]["bandwidth"]["iperf"]["role"] == "client" else 0
+        transport = 1 if task_data["link_metrics"]["bandwidth"]["iperf"]["transport"] == "tcp" else 0
+        test_duration = task_data["link_metrics"]["bandwidth"]["iperf"]["test_duration"]
+        bandwidth_threshold = task_data["alertflow_conditions"]["bandwidth"]
+
+        message += struct.pack("!BBBBBH", frequency, bandwidth_active, role, transport, test_duration, bandwidth_threshold)
+
+    return message
 
 # Função para decodificar mensagens
 def decode_message(data):
