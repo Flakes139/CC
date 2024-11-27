@@ -66,30 +66,31 @@ def process_registration(sock, addr, msg):
     """
     Processa o registro do agente e envia um ACK de confirmação.
     """
-    decoded = mensagens.decode_message(msg)
-    agent_id = decoded.get('agent_id')
-    sequence = decoded.get('sequence')  # Obtém a sequência da mensagem
+    try:
+        decoded = mensagens.decode_message(msg)
+        if not decoded:
+            print(f"[NetTask] Mensagem inválida recebida de {addr}: {msg}")
+            return
+        
+        agent_id = decoded.get('agent_id')
+        sequence = decoded.get('sequence')
 
-    if agent_id not in AGENTS:
-        AGENTS[agent_id] = addr
-        print(f"[NetTask] Agente registrado: ID {agent_id} de {addr}")
-    else:
-        print(f"[NetTask] Agente {agent_id} já registrado.")
+        if agent_id is None or sequence is None:
+            print(f"[NetTask] Dados incompletos na mensagem: {decoded}")
+            return
 
-    # Envia um ACK ao agente
-    ack_message = mensagens.create_ack_message(sequence)
-    sock.sendto(ack_message, addr)
-    print(f"[UDP] ACK enviado para {addr}")
+        if agent_id not in AGENTS:
+            AGENTS[agent_id] = addr
+            print(f"[NetTask] Agente registrado: ID {agent_id} de {addr}")
+        else:
+            print(f"[NetTask] Agente {agent_id} já registrado.")
 
-    # Obtém os dados da tarefa para o agente
-    task_data = next(
-        (task for task in TASKS if task["device_id"] == str(agent_id)),
-        None
-    )
+        ack_message = mensagens.create_ack_message(sequence)
+        sock.sendto(ack_message, addr)
+        print(f"[UDP] ACK enviado para {addr}")
 
-    if task_data:
-        # Envia a mensagem de tarefa ao agente
-        send_task(sock, agent_id, sequence, task_data)
+    except Exception as e:
+        print(f"[NetTask] Erro ao processar mensagem de {addr}: {e}")
 
 
 def send_task(sock, agent_id, sequence, task_data):
