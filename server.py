@@ -10,10 +10,9 @@ TASKS = []  # Lista de tarefas carregadas do JSON
 
 def initialize_server():
     """
-    Solicita ao usuário as portas UDP e TCP para configurar o servidor.
+    Solicita ao usuário a porta UDP e o caminho do JSON para configurar o servidor.
     """
     udp_port = int(input("Digite a porta UDP: ").strip())
-    tcp_port = int(input("Digite a porta TCP: ").strip())
     json_path = input("Digite o caminho para o arquivo JSON de configuração: ").strip()
 
     # Carregar tarefas do JSON
@@ -21,7 +20,8 @@ def initialize_server():
     TASKS = carregar_tarefas(json_path)
     print(f"[Servidor] Tarefas carregadas: {TASKS}")
 
-    return udp_port, tcp_port
+    return udp_port
+
 
 def udp_server(udp_port):
     """
@@ -32,15 +32,17 @@ def udp_server(udp_port):
     print(f"[UDP] Servidor ouvindo na porta UDP {udp_port}")
 
     while True:
-        msg, addr = sock.recvfrom(8192)
         try:
+            msg, addr = sock.recvfrom(8192)
             decoded = mensagens.decode_message(msg)
             print(f"[UDP] Mensagem recebida de {addr}: {decoded}")
 
             if decoded["type"] == "ATIVA":
                 process_registration(sock, addr, decoded)
             elif decoded["type"] == "ACK":
-                print(f"[NetTask] ACK recebido do agente {addr}.")
+                print(f"[NetTask] ACK recebido do agente em {addr}.")
+            else:
+                print(f"[UDP] Tipo de mensagem desconhecido de {addr}: {decoded}")
         except Exception as e:
             print(f"[UDP] Erro ao processar mensagem de {addr}: {e}")
 
@@ -78,23 +80,28 @@ def send_task_to_agent(sock, agent_id, addr):
         return
 
     # Criar mensagem de tarefa em binário
-    task_message = mensagens.create_task_message(
-        sequence=1,
-        metrics=task["device_metrics"],
-        link_metrics=task["link_metrics"],
-        alert_conditions=task["alertflow_conditions"]
-    )
+    try:
+        task_message = mensagens.create_task_message(
+            sequence=1,
+            metrics=task["device_metrics"],
+            link_metrics=task["link_metrics"],
+            alert_conditions=task["alertflow_conditions"]
+        )
 
-    # Enviar a mensagem para o agente
-    sock.sendto(task_message, addr)
-    print(f"[NetTask] Tarefa enviada para o agente ID {agent_id} em {addr}: {task_message}")
+        # Enviar a mensagem para o agente
+        sock.sendto(task_message, addr)
+        print(f"[NetTask] Tarefa enviada para o agente ID {agent_id} em {addr}: {task_message}")
+    except KeyError as e:
+        print(f"[NetTask] Erro ao criar mensagem de tarefa para o agente ID {agent_id}: {e}")
+    except Exception as e:
+        print(f"[NetTask] Erro inesperado ao enviar tarefa para o agente ID {agent_id}: {e}")
 
 
 if __name__ == "__main__":
-    # Inicializa o servidor pedindo as portas ao usuário
-    udp_port, tcp_port = initialize_server()
+    # Inicializa o servidor pedindo a porta UDP ao usuário
+    udp_port = initialize_server()
 
-    # Inicia threads para os servidores UDP e TCP
+    # Inicia o servidor UDP em uma thread
     udp_server_thread = Thread(target=udp_server, args=(udp_port,), daemon=True)
     udp_server_thread.start()
 

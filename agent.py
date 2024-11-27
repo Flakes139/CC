@@ -3,15 +3,15 @@ import time
 from threading import Thread
 import mensagens
 
+
 def initialize_agent():
     """
-    Solicita ao usuário o IP do servidor, portas UDP/TCP e ID do agente.
+    Solicita ao usuário o IP do servidor, porta UDP e ID do agente.
     """
     server_ip = input("Digite o IP do servidor: ").strip()
     udp_port = int(input("Digite a porta UDP do servidor: ").strip())
-    tcp_port = int(input("Digite a porta TCP do servidor: ").strip())
     agent_id = int(input("Digite o ID do agente: ").strip())
-    return server_ip, udp_port, tcp_port, agent_id
+    return server_ip, udp_port, agent_id
 
 
 def register_agent(server_ip, udp_port, agent_id):
@@ -53,7 +53,7 @@ def register_agent(server_ip, udp_port, agent_id):
         print("[UDP] Número máximo de tentativas atingido. Registro não foi confirmado.")
 
 
-def udp_receiver(udp_port, server_ip, tcp_port):
+def udp_receiver(udp_port, server_ip):
     """
     Recebe mensagens do servidor via UDP e envia um ACK de confirmação.
     """
@@ -80,13 +80,15 @@ def udp_receiver(udp_port, server_ip, tcp_port):
             print(f"[UDP] Erro ao processar mensagem de {address}: {e}")
 
 
-
 if __name__ == "__main__":
-    server_ip, udp_port, tcp_port, agent_id = initialize_agent()
+    # Solicita os dados de inicialização
+    server_ip, udp_port, agent_id = initialize_agent()
 
+    # Realiza registro do agente
     register_agent(server_ip, udp_port, agent_id)
 
-    udp_receiver_thread = Thread(target=udp_receiver, args=(server_ip,udp_port,), daemon=True)
+    # Inicia o receptor UDP em uma thread
+    udp_receiver_thread = Thread(target=udp_receiver, args=(udp_port, server_ip), daemon=True)
     udp_receiver_thread.start()
 
     try:
