@@ -52,25 +52,33 @@ def process_registration(sock, addr, decoded):
     """
     Processa o registro do agente, armazena seu IP e porta, e envia um ACK.
     """
-    agent_id = decoded.get('agent_id')
 
-    # Decodificar a porta UDP do agente do campo extra
+    print(f"[DEBUG] Mensagem recebida do agente: {decoded}")
+    
+    # Tente obter e desempacotar o campo extra_data
     try:
-        agent_port = struct.unpack("!H", decoded["extra_data"][:2])[0]
-    except KeyError:
-        print(f"[NetTask] Mensagem de registro do agente {agent_id} não contém 'extra_data'.")
+        extra_data = decoded.get("extra_data", b"")
+        if len(extra_data) < 2:  # Certifique-se de que há dados suficientes
+            raise ValueError("Campo extra_data é menor que o esperado.")
+        
+        agent_port = struct.unpack("!H", extra_data[:2])[0]  # Desempacota a porta UDP
+    except Exception as e:
+        print(f"[NetTask] Erro ao desempacotar porta do agente: {e}")
         return
 
+    agent_id = decoded.get('agent_id')
     if agent_id not in AGENTS:
         AGENTS[agent_id] = (addr[0], agent_port)
         print(f"[NetTask] Agente registrado: {agent_id} em {(addr[0], agent_port)}")
     else:
         print(f"[NetTask] Agente {agent_id} já registrado em {AGENTS[agent_id]}")
 
+    # Enviar ACK ao agente
     ack_message = mensagens.create_ack_message(decoded["sequence"])
     sock.sendto(ack_message, addr)
     print(f"[UDP] ACK enviado para {addr}")
 
+    # Enviar tarefa ao agente
     send_task_to_agent(sock, agent_id)
 
 
