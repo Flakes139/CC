@@ -8,14 +8,12 @@ MESSAGE_TYPES = {
     "TASK": 0x03,   # Tarefas e métricas
 }
 
-# Função para criar uma mensagem ATIVA
-def create_ativa_message(sequence, agent_id, agent_port):
+def create_ativa_message(sequence, agent_id):
     """
-    Cria uma mensagem ATIVA com o agent_id e agent_port.
+    Cria uma mensagem ATIVA com apenas o agent_id.
     """
     message_type = MESSAGE_TYPES["ATIVA"]
-    # Empacota o tipo, sequência, ID do agente e a porta do agente
-    return struct.pack("!BBBH", message_type, sequence, agent_id, agent_port)
+    return struct.pack("!BBH", message_type, sequence, agent_id)
 
 
 # Função para criar uma mensagem ACK

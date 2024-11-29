@@ -6,13 +6,12 @@ import mensagens
 
 def initialize_agent():
     """
-    Solicita ao usuário o IP do servidor, porta UDP do servidor e ID do agente.
+    Solicita ao usuário o IP do servidor, porta UDP e ID do agente.
     """
     server_ip = input("Digite o IP do servidor: ").strip()
     udp_port = int(input("Digite a porta UDP do servidor: ").strip())
     agent_id = int(input("Digite o ID do agente: ").strip())
     return server_ip, udp_port, agent_id
-
 
 def register_agent(server_ip, udp_port, agent_id):
     """
@@ -22,6 +21,7 @@ def register_agent(server_ip, udp_port, agent_id):
     max_attempts = 3
     attempt = 0
 
+    # Remove o agent_port aqui, mantendo apenas sequence e agent_id
     message = mensagens.create_ativa_message(sequence, agent_id)
     print(f"[DEBUG] Mensagem ATIVA criada: {message}")
 
@@ -42,9 +42,6 @@ def register_agent(server_ip, udp_port, agent_id):
                     return
             except socket.timeout:
                 print(f"[UDP] Timeout aguardando ACK (Tentativa {attempt + 1}).")
-            except Exception as e:
-                print(f"[UDP] Erro ao enviar mensagem ATIVA: {e}")
-
             attempt += 1
             time.sleep(3)
 
