@@ -13,7 +13,7 @@ def create_ativa_message(sequence, agent_id):
     Cria uma mensagem ATIVA com apenas o agent_id.
     """
     message_type = MESSAGE_TYPES["ATIVA"]
-    return struct.pack("!BBH", message_type, sequence, agent_id)
+    return struct.pack("!BBB", message_type, sequence, agent_id)
 
 
 # Função para criar uma mensagem ACK

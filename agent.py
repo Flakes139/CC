@@ -13,7 +13,7 @@ def initialize_agent():
     agent_id = int(input("Digite o ID do agente: ").strip())
     return server_ip, udp_port, agent_id
 
-def register_agent(server_ip, udp_port, agent_id):
+def register_agent(server_ip, agent_id):
     """
     Envia uma mensagem ATIVA ao servidor e aguarda o ACK.
     """
