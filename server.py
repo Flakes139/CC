@@ -3,7 +3,6 @@ import json
 from threading import Thread
 import mensagens
 from parserJSON import carregar_tarefas
-import struct
 
 AGENTS = {}  # Dicionário para armazenar agentes registrados e seus IPs e portas
 TASKS = []  # Lista de tarefas carregadas do JSON
@@ -50,26 +49,15 @@ def udp_server(udp_port):
 
 def process_registration(sock, addr, decoded):
     """
-    Processa o registro do agente, armazena seu IP e porta, e envia um ACK.
+    Processa o registro do agente, armazena seu IP e porta automaticamente do `addr`,
+    e envia um ACK de confirmação. Em seguida, envia as tarefas correspondentes.
     """
-
-    print(f"[DEBUG] Mensagem recebida do agente: {decoded}")
-    
-    # Tente obter e desempacotar o campo extra_data
-    try:
-        extra_data = decoded.get("extra_data", b"")
-        if len(extra_data) < 2:  # Certifique-se de que há dados suficientes
-            raise ValueError("Campo extra_data é menor que o esperado.")
-        
-        agent_port = struct.unpack("!H", extra_data[:2])[0]  # Desempacota a porta UDP
-    except Exception as e:
-        print(f"[NetTask] Erro ao desempacotar porta do agente: {e}")
-        return
-
     agent_id = decoded.get('agent_id')
+
+    # Armazena o IP e a porta diretamente do endereço recebido
     if agent_id not in AGENTS:
-        AGENTS[agent_id] = (addr[0], agent_port)
-        print(f"[NetTask] Agente registrado: {agent_id} em {(addr[0], agent_port)}")
+        AGENTS[agent_id] = addr  # `addr` já contém (IP, porta UDP)
+        print(f"[NetTask] Agente registrado: ID {agent_id} em {addr}")
     else:
         print(f"[NetTask] Agente {agent_id} já registrado em {AGENTS[agent_id]}")
 
@@ -80,7 +68,6 @@ def process_registration(sock, addr, decoded):
 
     # Enviar tarefa ao agente
     send_task_to_agent(sock, agent_id)
-
 
 
 def send_task_to_agent(sock, agent_id):

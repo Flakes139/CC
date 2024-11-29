@@ -10,13 +10,12 @@ def initialize_agent():
     """
     server_ip = input("Digite o IP do servidor: ").strip()
     udp_port = int(input("Digite a porta UDP do servidor: ").strip())
-    agent_port = int(input("Digite a porta UDP do agente: ").strip())  # Adicionando agent_port
+    agent_port = int(input("Digite a porta UDP do agente: ").strip())
     agent_id = int(input("Digite o ID do agente: ").strip())
-    return server_ip, udp_port, agent_port, agent_id  # Retornar agent_port
+    return server_ip, udp_port, agent_port, agent_id
 
 
-
-def register_agent(server_ip, udp_port, agent_port, agent_id):
+def register_agent(server_ip, udp_port, agent_id):
     """
     Envia uma mensagem ATIVA ao servidor e aguarda o ACK.
     """
@@ -24,8 +23,7 @@ def register_agent(server_ip, udp_port, agent_port, agent_id):
     max_attempts = 3
     attempt = 0
 
-    # Atualização para incluir agent_port
-    message = mensagens.create_ativa_message(sequence, agent_id, agent_port)
+    message = mensagens.create_ativa_message(sequence, agent_id)
     print(f"[DEBUG] Mensagem ATIVA criada: {message}")
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
@@ -34,21 +32,22 @@ def register_agent(server_ip, udp_port, agent_port, agent_id):
         while attempt < max_attempts:
             try:
                 sock.sendto(message, (server_ip, udp_port))
-                print(f"[UDP] Mensagem ATIVA enviada para {server_ip}:{udp_port}")
+                print(f"[UDP] Mensagem ATIVA enviada (Tentativa {attempt + 1}) para {server_ip}:{udp_port}")
 
                 response, _ = sock.recvfrom(1024)
                 decoded = mensagens.decode_message(response)
                 print(f"[DEBUG] Resposta decodificada: {decoded}")
 
                 if decoded["type"] == "ACK" and decoded["sequence"] == sequence:
-                    print("[UDP] Registro confirmado.")
+                    print(f"[UDP] ACK recebido para sequência {sequence}. Registro confirmado.")
                     return
             except socket.timeout:
                 print(f"[UDP] Timeout aguardando ACK (Tentativa {attempt + 1}).")
             attempt += 1
             time.sleep(3)
 
-        print("[UDP] Registro falhou após várias tentativas.")
+        print("[UDP] Número máximo de tentativas atingido. Registro não foi confirmado.")
+
 
 def udp_receiver(agent_port):
     """
@@ -75,7 +74,7 @@ def udp_receiver(agent_port):
 if __name__ == "__main__":
     server_ip, udp_port, agent_port, agent_id = initialize_agent()
 
-    register_agent(server_ip, udp_port, agent_port, agent_id)
+    register_agent(server_ip, udp_port, agent_id)
 
     udp_receiver_thread = Thread(target=udp_receiver, args=(agent_port,), daemon=True)
     udp_receiver_thread.start()

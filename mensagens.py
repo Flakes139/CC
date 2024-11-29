@@ -42,11 +42,15 @@ def create_task_message(sequence, metrics, link_metrics, alert_conditions):
 
 # Função para decodificar mensagens
 def decode_message(data):
+    """
+    Decodifica mensagens recebidas.
+    """
     message_type = data[0]
 
     if message_type == MESSAGE_TYPES["ATIVA"]:
-        _, sequence, agent_id = struct.unpack("!BBB", data)
-        return {"type": "ATIVA", "sequence": sequence, "agent_id": agent_id}
+        # Decodificar a mensagem ATIVA que contém a porta
+        _, sequence, agent_id, agent_port = struct.unpack("!BBBH", data)
+        return {"type": "ATIVA", "sequence": sequence, "agent_id": agent_id, "agent_port": agent_port}
     elif message_type == MESSAGE_TYPES["ACK"]:
         _, sequence = struct.unpack("!BB", data)
         return {"type": "ACK", "sequence": sequence}
