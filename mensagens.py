@@ -48,7 +48,7 @@ def decode_message(data):
     if message_type == MESSAGE_TYPES["ATIVA"]:
         # Decodificar a mensagem ATIVA que contém a porta
         _, sequence, agent_id = struct.unpack("!BBBH", data)
-        return {"type": "ATIVA", "sequence": sequence, "agent_id": agent_id, "agent_port": agent_port}
+        return {"type": "ATIVA", "sequence": sequence, "agent_id": agent_id}
     elif message_type == MESSAGE_TYPES["ACK"]:
         _, sequence = struct.unpack("!BB", data)
         return {"type": "ACK", "sequence": sequence}
