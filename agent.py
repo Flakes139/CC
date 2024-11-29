@@ -10,9 +10,10 @@ def initialize_agent():
     """
     server_ip = input("Digite o IP do servidor: ").strip()
     udp_port = int(input("Digite a porta UDP do servidor: ").strip())
-    agent_port = int(input("Digite a porta UDP do agente: ").strip())
+    agent_port = int(input("Digite a porta UDP do agente: ").strip())  # Adicionando agent_port
     agent_id = int(input("Digite o ID do agente: ").strip())
-    return server_ip, udp_port, agent_id
+    return server_ip, udp_port, agent_port, agent_id  # Retornar agent_port
+
 
 
 def register_agent(server_ip, udp_port, agent_port, agent_id):

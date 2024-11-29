@@ -3,6 +3,7 @@ import json
 from threading import Thread
 import mensagens
 from parserJSON import carregar_tarefas
+import struct
 
 AGENTS = {}  # Dicionário para armazenar agentes registrados e seus IPs e portas
 TASKS = []  # Lista de tarefas carregadas do JSON
@@ -46,12 +47,19 @@ def udp_server(udp_port):
         except Exception as e:
             print(f"[UDP] Erro ao processar mensagem de {addr}: {e}")
 
+
 def process_registration(sock, addr, decoded):
     """
     Processa o registro do agente, armazena seu IP e porta, e envia um ACK.
     """
     agent_id = decoded.get('agent_id')
-    agent_port = struct.unpack("!H", decoded["extra_data"][:2])[0]  # Porta enviada pelo agente
+
+    # Decodificar a porta UDP do agente do campo extra
+    try:
+        agent_port = struct.unpack("!H", decoded["extra_data"][:2])[0]
+    except KeyError:
+        print(f"[NetTask] Mensagem de registro do agente {agent_id} não contém 'extra_data'.")
+        return
 
     if agent_id not in AGENTS:
         AGENTS[agent_id] = (addr[0], agent_port)
