@@ -51,20 +51,34 @@ def process_registration(sock, addr, decoded):
     """
     Processa o registro do agente, armazena seu IP e porta, e envia um ACK.
     """
-    agent_id = decoded.get('agent_id')
+    try:
+        # Certifique-se de que os campos necessários existem
+        agent_id = decoded.get("agent_id")
+        sequence = decoded.get("sequence")
 
-    if agent_id not in AGENTS:
-        AGENTS[agent_id] = addr  # Armazena o endereço IP e porta de origem do agente
-        print(f"[NetTask] Agente registrado: {agent_id} em {addr}")
-    else:
-        print(f"[NetTask] Agente {agent_id} já registrado em {AGENTS[agent_id]}")
+        if agent_id is None or sequence is None:
+            print(f"[NetTask] Mensagem de registro incompleta de {addr}: {decoded}")
+            return
 
-    ack_message = mensagens.create_ack_message(decoded["sequence"])
-    sock.sendto(ack_message, addr)
-    print(f"[UDP] ACK enviado para {addr}")
+        # Registrar o agente (IP e porta)
+        if agent_id not in AGENTS:
+            AGENTS[agent_id] = addr  # Armazena IP e porta do agente
+            print(f"[NetTask] Agente registrado: ID {agent_id} em {addr}")
+        else:
+            print(f"[NetTask] Agente {agent_id} já registrado em {AGENTS[agent_id]}")
 
-    send_task_to_agent(sock, agent_id)
+        # Enviar mensagem ACK para o agente
+        ack_message = mensagens.create_ack_message(sequence)
+        sock.sendto(ack_message, addr)
+        print(f"[UDP] ACK enviado para {addr}")
 
+        # Enviar tarefa ao agente registrado
+        send_task_to_agent(sock, agent_id)
+
+    except KeyError as e:
+        print(f"[UDP] Erro ao processar mensagem de registro de {addr}: Chave ausente {e}")
+    except Exception as e:
+        print(f"[UDP] Erro inesperado ao processar registro de {addr}: {e}")
 
 def send_task_to_agent(sock, agent_id):
     """
