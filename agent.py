@@ -15,7 +15,7 @@ def initialize_agent():
     return server_ip, udp_port, agent_id
 
 
-def register_agent(server_ip, udp_port, agent_id):
+def register_agent(server_ip, udp_port, agent_port, agent_id):
     """
     Envia uma mensagem ATIVA ao servidor e aguarda o ACK.
     """
@@ -23,7 +23,8 @@ def register_agent(server_ip, udp_port, agent_id):
     max_attempts = 3
     attempt = 0
 
-    message = mensagens.create_ativa_message(sequence, agent_id)
+    # Atualização para incluir agent_port
+    message = mensagens.create_ativa_message(sequence, agent_id, agent_port)
     print(f"[DEBUG] Mensagem ATIVA criada: {message}")
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
@@ -32,22 +33,21 @@ def register_agent(server_ip, udp_port, agent_id):
         while attempt < max_attempts:
             try:
                 sock.sendto(message, (server_ip, udp_port))
-                print(f"[UDP] Mensagem ATIVA enviada (Tentativa {attempt + 1}) para {server_ip}:{udp_port}")
+                print(f"[UDP] Mensagem ATIVA enviada para {server_ip}:{udp_port}")
 
                 response, _ = sock.recvfrom(1024)
                 decoded = mensagens.decode_message(response)
                 print(f"[DEBUG] Resposta decodificada: {decoded}")
 
                 if decoded["type"] == "ACK" and decoded["sequence"] == sequence:
-                    print(f"[UDP] ACK recebido para sequência {sequence}. Registro confirmado.")
+                    print("[UDP] Registro confirmado.")
                     return
             except socket.timeout:
                 print(f"[UDP] Timeout aguardando ACK (Tentativa {attempt + 1}).")
             attempt += 1
             time.sleep(3)
 
-        print("[UDP] Número máximo de tentativas atingido. Registro não foi confirmado.")
-
+        print("[UDP] Registro falhou após várias tentativas.")
 
 def udp_receiver(agent_port):
     """

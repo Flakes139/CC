@@ -46,27 +46,25 @@ def udp_server(udp_port):
         except Exception as e:
             print(f"[UDP] Erro ao processar mensagem de {addr}: {e}")
 
-
 def process_registration(sock, addr, decoded):
     """
-    Processa o registro do agente, armazena seu IP e porta, e envia um ACK de confirmação.
-    Em seguida, envia as tarefas correspondentes com base no JSON.
+    Processa o registro do agente, armazena seu IP e porta, e envia um ACK.
     """
     agent_id = decoded.get('agent_id')
-    agent_port = decoded.get('agent_port')  # Porta que o agente enviou no registro
+    agent_port = struct.unpack("!H", decoded["extra_data"][:2])[0]  # Porta enviada pelo agente
+
     if agent_id not in AGENTS:
-        AGENTS[agent_id] = (addr[0], agent_port)  # Armazena IP e porta do agente
-        print(f"[NetTask] Agente registrado: ID {agent_id} em {(addr[0], agent_port)}")
+        AGENTS[agent_id] = (addr[0], agent_port)
+        print(f"[NetTask] Agente registrado: {agent_id} em {(addr[0], agent_port)}")
     else:
         print(f"[NetTask] Agente {agent_id} já registrado em {AGENTS[agent_id]}")
 
-    # Enviar ACK ao agente
     ack_message = mensagens.create_ack_message(decoded["sequence"])
     sock.sendto(ack_message, addr)
     print(f"[UDP] ACK enviado para {addr}")
 
-    # Enviar tarefa ao agente
     send_task_to_agent(sock, agent_id)
+
 
 
 def send_task_to_agent(sock, agent_id):
