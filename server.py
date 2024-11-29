@@ -4,7 +4,7 @@ from threading import Thread
 import mensagens
 from parserJSON import carregar_tarefas
 
-AGENTS = {}  # Dicionário para armazenar agentes registrados e seus IPs e portas
+AGENTS = {}  # Dicionário para armazenar agentes registrados e seus IPs
 TASKS = []  # Lista de tarefas carregadas do JSON
 
 
@@ -49,24 +49,20 @@ def udp_server(udp_port):
 
 def process_registration(sock, addr, decoded):
     """
-    Processa o registro do agente, armazena seu IP e porta automaticamente do `addr`,
-    e envia um ACK de confirmação. Em seguida, envia as tarefas correspondentes.
+    Processa o registro do agente, armazena seu IP e porta, e envia um ACK.
     """
     agent_id = decoded.get('agent_id')
 
-    # Armazena o IP e a porta diretamente do endereço recebido
     if agent_id not in AGENTS:
-        AGENTS[agent_id] = addr  # `addr` já contém (IP, porta UDP)
-        print(f"[NetTask] Agente registrado: ID {agent_id} em {addr}")
+        AGENTS[agent_id] = addr  # Armazena o endereço IP e porta de origem do agente
+        print(f"[NetTask] Agente registrado: {agent_id} em {addr}")
     else:
         print(f"[NetTask] Agente {agent_id} já registrado em {AGENTS[agent_id]}")
 
-    # Enviar ACK ao agente
     ack_message = mensagens.create_ack_message(decoded["sequence"])
     sock.sendto(ack_message, addr)
     print(f"[UDP] ACK enviado para {addr}")
 
-    # Enviar tarefa ao agente
     send_task_to_agent(sock, agent_id)
 
 

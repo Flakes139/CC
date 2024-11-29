@@ -6,13 +6,12 @@ import mensagens
 
 def initialize_agent():
     """
-    Solicita ao usuário o IP do servidor, portas UDP/TCP e ID do agente.
+    Solicita ao usuário o IP do servidor, porta UDP do servidor e ID do agente.
     """
     server_ip = input("Digite o IP do servidor: ").strip()
     udp_port = int(input("Digite a porta UDP do servidor: ").strip())
-    agent_port = int(input("Digite a porta UDP do agente: ").strip())
     agent_id = int(input("Digite o ID do agente: ").strip())
-    return server_ip, udp_port, agent_port, agent_id
+    return server_ip, udp_port, agent_id
 
 
 def register_agent(server_ip, udp_port, agent_id):
@@ -43,6 +42,9 @@ def register_agent(server_ip, udp_port, agent_id):
                     return
             except socket.timeout:
                 print(f"[UDP] Timeout aguardando ACK (Tentativa {attempt + 1}).")
+            except Exception as e:
+                print(f"[UDP] Erro ao enviar mensagem ATIVA: {e}")
+
             attempt += 1
             time.sleep(3)
 
@@ -72,12 +74,14 @@ def udp_receiver(agent_port):
 
 
 if __name__ == "__main__":
-    server_ip, udp_port, agent_port, agent_id = initialize_agent()
+    server_ip, udp_port, agent_id = initialize_agent()
 
-    register_agent(server_ip, udp_port, agent_id)
-
+    # Bind do agente na porta escolhida automaticamente
+    agent_port = 33333  # Defina aqui a porta padrão do agente
     udp_receiver_thread = Thread(target=udp_receiver, args=(agent_port,), daemon=True)
     udp_receiver_thread.start()
+
+    register_agent(server_ip, udp_port, agent_id)
 
     try:
         while True:
