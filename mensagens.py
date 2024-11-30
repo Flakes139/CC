@@ -58,3 +58,17 @@ def decode_message(data):
         return {"type": "TASK", "sequence": sequence, **payload}
     else:
         return {"type": "UNKNOWN", "raw_data": data}
+    
+def create_alert_message(report):
+    """
+    Cria uma mensagem de alertflow em JSON.
+    """
+    alert_data = json.dumps({"type": "ALERTFLOW", **report})
+    return alert_data.encode('utf-8')
+
+def create_report_message(report):
+    """
+    Cria uma mensagem de relatório em JSON.
+    """
+    report_data = json.dumps({"type": "REPORT", **report})
+    return report_data.encode('utf-8')

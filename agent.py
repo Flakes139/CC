@@ -2,7 +2,7 @@ import socket
 import time
 from threading import Thread
 import mensagens
-
+import testesaux 
 
 def initialize_agent():
     """
@@ -56,9 +56,9 @@ def register_agent(sock, server_ip, udp_port, agent_id):
     return send_with_ack(sock, message, (server_ip, udp_port))
 
 
-def udp_receiver(sock):
+def udp_receiver(sock, server_address):
     """
-    Recebe mensagens do servidor via UDP e imprime as tarefas.
+    Recebe mensagens do servidor via UDP e processa as tarefas.
     """
     print(f"[UDP] Cliente ouvindo na porta UDP {sock.getsockname()[1]}")
 
@@ -69,6 +69,10 @@ def udp_receiver(sock):
             print(f"[UDP] Mensagem decodificada recebida do servidor: {decoded}")
 
             if decoded["type"] == "TASK":
+
+                #Processar a tarefa
+                process_task(sock, server_address, decoded)
+
                 # Enviar ACK para o servidor
                 ack_message = mensagens.create_ack_message(decoded["sequence"])
                 sock.sendto(ack_message, address)
@@ -96,3 +100,90 @@ if __name__ == "__main__":
         except KeyboardInterrupt:
             print("\n[Agente] Encerrado.")
             agent_socket.close()
+
+def process_task(sock, server_address, task):
+    """
+    Processa a tarefa recebida e realiza as métricas.
+    Envia um relatório final ou alertflow ao servidor.
+    """
+    task_id = task.get("sequence")
+    metrics = task.get("metrics")
+    link_metrics = task.get("link_metrics")
+    alert_conditions = task.get("alert_conditions")
+    
+    report = {"task_id": task_id, "results": [], "status": "success"}
+    
+    try:
+        for attempt in range(1, 4):  # neste momento faz 3 tentativas
+            result = {}
+
+            # Executar Ping
+            if "ping" in metrics:
+                print(f"[TASK] Realizando ping ({attempt}/3)...")
+                result["ping"] = testesaux.ping_and_store(metrics["ping"]["host"], metrics["ping"]["count"])
+
+            # Executar Iperf
+            if "iperf" in link_metrics:
+                print(f"[TASK] Realizando iperf ({attempt}/3)...")
+                result["iperf"] = testesaux.iperf_and_store(
+                    link_metrics["iperf"]["server"], 
+                    link_metrics["iperf"].get("port", 5201), 
+                    link_metrics["iperf"].get("duration", 10)
+                )
+
+            # Monitorar CPU
+            if "cpu" in metrics:
+                print(f"[TASK] Monitorando CPU ({attempt}/3)...")
+                result["cpu"] = testesaux.get_cpu_usage(metrics["cpu"]["interval"])
+
+            # Monitorar RAM
+            if "ram" in metrics:
+                print(f"[TASK] Monitorando RAM ({attempt}/3)...")
+                result["ram"] = testesaux.get_ram_usage()
+
+            # Adicionar resultado ao relatório
+            report["results"].append(result)
+            time.sleep(5)  # Intervalo entre as tentativas
+
+    except Exception as e:
+        print(f"[TASK] Falha na tarefa {task_id}: {e}")
+        report["status"] = "failed"
+        report["error"] = str(e)
+
+    # Avaliar as condições de alerta
+    if report["status"] == "failed" or any(evaluate_alert_conditions(alert_conditions, r) for r in report["results"]):
+        send_alertflow(sock, server_address, report)
+    else:
+        send_report(sock, server_address, report)
+
+
+
+def evaluate_alert_conditions(conditions, result):
+    """
+    Avalia se as condições de alerta são atendidas.
+    """
+    try:
+        # Exemplo: Verificar se o tempo médio de ping é maior que um limite
+        if "ping" in result and "max_time" in result["ping"]:
+            if result["ping"]["max_time"] > conditions.get("max_ping_time", float('inf')):
+                return True
+        # Outras condições podem ser adicionadas aqui
+    except Exception as e:
+        print(f"[ALERT] Erro ao avaliar condição de alerta: {e}")
+    return False
+
+def send_alertflow(sock, server_address, report):
+    """
+    Envia um alertflow ao servidor.
+    """
+    alert_message = mensagens.create_alert_message(report)
+    sock.sendto(alert_message, server_address)
+    print(f"[ALERTFLOW] Enviado: {report}")
+
+def send_report(sock, server_address, report):
+    """
+    Envia o relatório final ao servidor.
+    """
+    report_message = mensagens.create_report_message(report)
+    sock.sendto(report_message, server_address)
+    print(f"[REPORT] Relatório enviado: {report}")
