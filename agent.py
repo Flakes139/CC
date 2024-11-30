@@ -14,41 +14,46 @@ def initialize_agent():
     return server_ip, udp_port, agent_id
 
 
-def register_agent(sock, server_ip, udp_port, agent_id):
+def send_with_ack(sock, message, destination, max_attempts=3):
     """
-    Envia uma mensagem ATIVA ao servidor e aguarda o ACK.
-    Fecha a socket se o registro falhar.
+    Envia uma mensagem e aguarda o ACK.
+    Fecha a socket após falha em todas as tentativas.
     """
-    sequence = 1
-    max_attempts = 3
     attempt = 0
+    sequence = mensagens.decode_message(message).get("sequence", None)
 
-    message = mensagens.create_ativa_message(sequence, agent_id)
-    print(f"[DEBUG] Mensagem ATIVA criada: {message}")
-
-    sock.settimeout(3)  # Define timeout para receber respostas
-
+    sock.settimeout(3)  # Define timeout enquanto aguarda o ACK
     while attempt < max_attempts:
         try:
-            sock.sendto(message, (server_ip, udp_port))
-            print(f"[UDP] Mensagem ATIVA enviada (Tentativa {attempt + 1}) para {server_ip}:{udp_port}")
+            sock.sendto(message, destination)
+            print(f"[UDP] Mensagem enviada para {destination} (Tentativa {attempt + 1})")
 
             response, _ = sock.recvfrom(1024)
             decoded = mensagens.decode_message(response)
             print(f"[DEBUG] Resposta decodificada: {decoded}")
 
             if decoded["type"] == "ACK" and decoded["sequence"] == sequence:
-                print(f"[UDP] ACK recebido para sequência {sequence}. Registro confirmado.")
-                return True  # Registro bem-sucedido, mantém a socket aberta
+                print("[UDP] ACK recebido. Comunicação confirmada.")
+                return True  # ACK recebido com sucesso
         except socket.timeout:
             print(f"[UDP] Timeout aguardando ACK (Tentativa {attempt + 1}).")
         attempt += 1
         time.sleep(3)
 
-    print("[UDP] Número máximo de tentativas atingido. Registro não foi confirmado.")
-    sock.close()  # Fecha a socket após falha no registro
-    print("[UDP] Socket fechada após falha no registro.")
-    return False  # Registro falhou
+    print("[UDP] Número máximo de tentativas atingido. Fechando socket.")
+    sock.close()
+    return False  # Falha ao receber o ACK
+
+
+def register_agent(sock, server_ip, udp_port, agent_id):
+    """
+    Envia uma mensagem ATIVA ao servidor e aguarda o ACK.
+    """
+    sequence = 1
+    message = mensagens.create_ativa_message(sequence, agent_id)
+    print(f"[DEBUG] Mensagem ATIVA criada: {message}")
+
+    return send_with_ack(sock, message, (server_ip, udp_port))
 
 
 def udp_receiver(sock):
@@ -64,6 +69,7 @@ def udp_receiver(sock):
             print(f"[UDP] Mensagem decodificada recebida do servidor: {decoded}")
 
             if decoded["type"] == "TASK":
+                # Enviar ACK para o servidor
                 ack_message = mensagens.create_ack_message(decoded["sequence"])
                 sock.sendto(ack_message, address)
                 print(f"[UDP] ACK enviado para o servidor em {address}")
