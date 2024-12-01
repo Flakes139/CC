@@ -10,9 +10,11 @@ AGENTS = {}  # Dicionário para armazenar agentes registrados e seus IPs
 TASKS = []  # Lista de tarefas carregadas do JSON
 
 
+import subprocess
+
 def initialize_server():
     """
-    Solicita ao usuário a porta UDP e o caminho do JSON para configurar o servidor.
+    Solicita ao usuário a porta UDP e o caminho do JSON para configurar o servidor e inicia o servidor iperf.
     """
     udp_port = int(input("Digite a porta UDP: ").strip())
     json_path = input("Digite o caminho para o arquivo JSON de configuração: ").strip()
@@ -22,7 +24,19 @@ def initialize_server():
     TASKS = carregar_tarefas(json_path)
     print(f"[Servidor] Tarefas carregadas: {TASKS}")
 
+    # Inicializar o servidor iperf
+    try:
+        subprocess.Popen(
+            ["iperf3", "-s"],  # Inicia o iperf no modo servidor
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        print("[Servidor] Servidor iperf iniciado com sucesso.")
+    except Exception as e:
+        print(f"[Erro] Não foi possível iniciar o servidor iperf: {e}")
+
     return udp_port
+
 
 
 def send_with_ack(sock, message, destination, max_attempts=3):
