@@ -90,8 +90,11 @@ if __name__ == "__main__":
 
     # Registrar o agente
     if register_agent(agent_socket, server_ip, udp_port, agent_id):
+        # O valor de server_address é o IP e porta do servidor
+        server_address = (server_ip, udp_port)
+
         # Iniciar o receptor UDP somente se o registro foi bem-sucedido
-        udp_receiver_thread = Thread(target=udp_receiver, args=(agent_socket,), daemon=True)
+        udp_receiver_thread = Thread(target=udp_receiver, args=(agent_socket, server_address), daemon=True)
         udp_receiver_thread.start()
 
         try:
@@ -100,6 +103,7 @@ if __name__ == "__main__":
         except KeyboardInterrupt:
             print("\n[Agente] Encerrado.")
             agent_socket.close()
+
 
 def process_task(sock, server_address, task):
     """
