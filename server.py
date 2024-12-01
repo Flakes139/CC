@@ -3,6 +3,8 @@ import json
 from threading import Thread
 import mensagens
 from parserJSON import carregar_tarefas
+import time
+
 
 AGENTS = {}  # Dicionário para armazenar agentes registrados e seus IPs
 TASKS = []  # Lista de tarefas carregadas do JSON

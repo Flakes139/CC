@@ -55,56 +55,6 @@ def register_agent(sock, server_ip, udp_port, agent_id):
 
     return send_with_ack(sock, message, (server_ip, udp_port))
 
-
-def udp_receiver(sock, server_address):
-    """
-    Recebe mensagens do servidor via UDP e processa as tarefas.
-    """
-    print(f"[UDP] Cliente ouvindo na porta UDP {sock.getsockname()[1]}")
-
-    while True:
-        try:
-            message, address = sock.recvfrom(1024)
-            decoded = mensagens.decode_message(message)
-            print(f"[UDP] Mensagem decodificada recebida do servidor: {decoded}")
-
-            if decoded["type"] == "TASK":
-
-                #Processar a tarefa
-                process_task(sock, server_address, decoded)
-
-                # Enviar ACK para o servidor
-                ack_message = mensagens.create_ack_message(decoded["sequence"])
-                sock.sendto(ack_message, address)
-                print(f"[UDP] ACK enviado para o servidor em {address}")
-        except Exception as e:
-            print(f"[UDP] Erro ao processar mensagem: {e}")
-
-
-if __name__ == "__main__":
-    server_ip, udp_port, agent_id = initialize_agent()
-
-    # Criar uma única socket para todo o ciclo de vida do agente
-    agent_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    agent_socket.bind(('', 33333))  # Porta fixa para o agente
-
-    # Registrar o agente
-    if register_agent(agent_socket, server_ip, udp_port, agent_id):
-        # O valor de server_address é o IP e porta do servidor
-        server_address = (server_ip, udp_port)
-
-        # Iniciar o receptor UDP somente se o registro foi bem-sucedido
-        udp_receiver_thread = Thread(target=udp_receiver, args=(agent_socket, server_address), daemon=True)
-        udp_receiver_thread.start()
-
-        try:
-            while True:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            print("\n[Agente] Encerrado.")
-            agent_socket.close()
-
-
 def process_task(sock, server_address, task):
     """
     Processa a tarefa recebida e realiza as métricas.
@@ -191,3 +141,55 @@ def send_report(sock, server_address, report):
     report_message = mensagens.create_report_message(report)
     sock.sendto(report_message, server_address)
     print(f"[REPORT] Relatório enviado: {report}")
+
+
+def udp_receiver(sock, server_address):
+    """
+    Recebe mensagens do servidor via UDP e processa as tarefas.
+    """
+    print(f"[UDP] Cliente ouvindo na porta UDP {sock.getsockname()[1]}")
+
+    while True:
+        try:
+            message, address = sock.recvfrom(1024)
+            decoded = mensagens.decode_message(message)
+            print(f"[UDP] Mensagem decodificada recebida do servidor: {decoded}")
+
+            if decoded["type"] == "TASK":
+
+                #Processar a tarefa
+                process_task(sock, server_address, decoded)
+
+                # Enviar ACK para o servidor
+                ack_message = mensagens.create_ack_message(decoded["sequence"])
+                sock.sendto(ack_message, address)
+                print(f"[UDP] ACK enviado para o servidor em {address}")
+        except Exception as e:
+            print(f"[UDP] Erro ao processar mensagem: {e}")
+
+
+if __name__ == "__main__":
+    server_ip, udp_port, agent_id = initialize_agent()
+
+    # Criar uma única socket para todo o ciclo de vida do agente
+    agent_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    agent_socket.bind(('', 33333))  # Porta fixa para o agente
+
+    # Registrar o agente
+    if register_agent(agent_socket, server_ip, udp_port, agent_id):
+        # O valor de server_address é o IP e porta do servidor
+        server_address = (server_ip, udp_port)
+
+        # Iniciar o receptor UDP somente se o registro foi bem-sucedido
+        udp_receiver_thread = Thread(target=udp_receiver, args=(agent_socket, server_address), daemon=True)
+        udp_receiver_thread.start()
+
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("\n[Agente] Encerrado.")
+            agent_socket.close()
+
+
+
