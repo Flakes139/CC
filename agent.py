@@ -2,7 +2,7 @@ import socket
 import time
 from threading import Thread
 import mensagens
-import testesaux 
+import metricas 
 
 def initialize_agent():
     """
@@ -74,12 +74,12 @@ def process_task(sock, server_address, task):
             # Executar Ping
             if "ping" in metrics:
                 print(f"[TASK] Realizando ping ({attempt}/3)...")
-                result["ping"] = testesaux.ping_and_store(metrics["ping"]["host"], metrics["ping"]["count"])
+                result["ping"] = metricas.ping_and_store(metrics["ping"]["host"], metrics["ping"]["count"])
 
             # Executar Iperf
             if "iperf" in link_metrics:
                 print(f"[TASK] Realizando iperf ({attempt}/3)...")
-                result["iperf"] = testesaux.iperf_and_store(
+                result["iperf"] = metricas.iperf_and_store(
                     link_metrics["iperf"]["server"], 
                     link_metrics["iperf"].get("port", 5201), 
                     link_metrics["iperf"].get("duration", 10)
@@ -88,12 +88,12 @@ def process_task(sock, server_address, task):
             # Monitorar CPU
             if "cpu" in metrics:
                 print(f"[TASK] Monitorando CPU ({attempt}/3)...")
-                result["cpu"] = testesaux.get_cpu_usage(metrics["cpu"]["interval"])
+                result["cpu"] = metricas.get_cpu_usage(metrics["cpu"]["interval"])
 
             # Monitorar RAM
             if "ram" in metrics:
                 print(f"[TASK] Monitorando RAM ({attempt}/3)...")
-                result["ram"] = testesaux.get_ram_usage()
+                result["ram"] = metricas.get_ram_usage()
 
             # Adicionar resultado ao relatório
             report["results"].append(result)
