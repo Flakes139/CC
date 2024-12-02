@@ -65,8 +65,6 @@ def process_task(sock, server_address, task):
     link_metrics = task.get("link_metrics")
     alert_conditions = task.get("alert_conditions")
     
-    report = {"task_id": task_id, "results": [], "status": "success"}
-    
     try:
         for attempt in range(1, 4):  # neste momento faz 3 tentativas
             result = {}
@@ -95,7 +93,10 @@ def process_task(sock, server_address, task):
                 print(f"[TASK] Monitorando RAM ({attempt}/3)...")
                 result["ram"] = metricas.get_ram_usage()
 
+            print("results:", result)
+
             report = {"task_id": task_id, "results": result, "status": "success"}
+            
             time.sleep(5)  # Intervalo entre as tentativas
 
     except Exception as e:
