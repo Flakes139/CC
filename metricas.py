@@ -123,9 +123,9 @@ if __name__ == "__main__":
     choice = input("Opção: ")
     
     if choice == "1":
-        ping_and_store("10.0.5.10", 4)
+        ping_and_store("10.0.0.10", 4)
     elif choice == "2":
-        iperf_and_store("10.0.5.10", 5201, 10)
+        iperf_and_store("10.0.0.10", 5201, 10)
     elif choice == "3":
         get_cpu_usage(1)
     elif choice == "4":
