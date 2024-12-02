@@ -73,12 +73,12 @@ def process_task(sock, server_address, task):
             result = {}
 
             # Executar Ping
-            if "ping" in metrics:
+            if "latency" in link_metrics:
                 print(f"[TASK] Realizando ping ({attempt}/3)...")
                 result["ping"] = metricas.ping_and_store(metrics["ping"]["destination"], metrics["ping"]["count"])
 
             # Executar Iperf
-            if "iperf" in link_metrics:
+            if "bandwidth" in link_metrics:
                 print(f"[TASK] Realizando iperf ({attempt}/3)...")
                 result["iperf"] = metricas.iperf_and_store(
                     link_metrics["iperf"]["server"], 
@@ -87,12 +87,12 @@ def process_task(sock, server_address, task):
                 )
 
             # Monitorar CPU
-            if "cpu" in metrics:
+            if "'cpu_usage': True" in metrics:
                 print(f"[TASK] Monitorando CPU ({attempt}/3)...")
                 result["cpu"] = metricas.get_cpu_usage(1)
 
             # Monitorar RAM
-            if "ram" in metrics:
+            if "'ram_usage': True" in metrics:
                 print(f"[TASK] Monitorando RAM ({attempt}/3)...")
                 result["ram"] = metricas.get_ram_usage()
 
