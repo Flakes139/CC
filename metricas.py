@@ -41,7 +41,7 @@ def ping_and_store(host, count):
 
         
 
-def iperf_and_store(server, port=5201, duration=10):
+def iperf_and_store(server, port, duration):
     try:
         result = subprocess.run(
             ["iperf3", "-c", server, "-p", str(port), "-t", str(duration)],
@@ -92,12 +92,13 @@ def iperf_and_store(server, port=5201, duration=10):
 
         
 def get_cpu_usage(interval):
-    try:
-        cpu_usage = psutil.cpu_percent(interval=interval)
-        return cpu_usage  # Retornar o valor da CPU
-    except Exception as e:
-        print(f"Erro ao obter o uso da CPU: {e}")
-        return None  # Retornar None em caso de erro
+    while True:
+        try:
+            cpu_usage = psutil.cpu_percent(interval=interval)
+            print(f"\nUso da CPU: {cpu_usage}%\n")
+        except Exception as e:
+            print(f"Erro ao obter o uso da CPU: {e}")
+
 
 
 def get_ram_usage():
