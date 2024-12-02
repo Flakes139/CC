@@ -67,19 +67,52 @@ def create_alert_message(report):
     alert_data = json.dumps({"type": "ALERTFLOW", **report})
     return alert_data.encode('utf-8')
 
+
 def create_report_message(report):
     """
-    Cria uma mensagem de relatório em JSON.
+    Gera um relatório detalhado a partir do objeto report.
     """
-    report_data = json.dumps({"type": "REPORT", **report})
-    return report_data.encode('utf-8')
+    try:
+        # Cabeçalho do relatório
+        report_content = []
+        report_content.append(f"--- Relatório da Tarefa ---")
+        report_content.append(f"ID da Tarefa: {report.get('task_id')}")
+        report_content.append(f"Status: {report.get('status')}\n")
 
+        # Detalhes dos resultados
+        report_content.append("Resultados:")
+        for i, result in enumerate(report.get("results", []), start=1):
+            report_content.append(f"\n--- Tentativa {i} ---")
+            if "ping" in result:
+                ping = result["ping"]
+                report_content.append("Ping:")
+                report_content.append(f"  Host: {ping.get('host')}")
+                report_content.append(f"  Tempos (ms): {ping.get('times', [])}")
+                report_content.append(f"  Perda de Pacotes: {ping.get('packet_loss')}%")
+                report_content.append(f"  Tempo Máximo: {ping.get('max_time', 'N/A')} ms")
+            if "iperf" in result:
+                iperf = result["iperf"]
+                report_content.append("Iperf:")
+                report_content.append(f"  Servidor: {iperf.get('server')}")
+                report_content.append(f"  Largura de Banda: {iperf.get('bandwidth_mbps', 'N/A')} Mbps")
+                report_content.append(f"  Transferência: {iperf.get('transfer_mbytes', 'N/A')} MB")
+            if "cpu" in result:
+                report_content.append(f"CPU Uso: {result['cpu']}%")
+            if "ram" in result:
+                ram = result["ram"]
+                report_content.append("RAM:")
+                report_content.append(f"  Total: {ram.get('total', 'N/A')} GB")
+                report_content.append(f"  Usado: {ram.get('used', 'N/A')} GB")
+                report_content.append(f"  Percentual de Uso: {ram.get('percent', 'N/A')}%")
 
+        # Adicionar erros (se houver)
+        if report.get("status") == "failed":
+            report_content.append(f"\n--- Erro ---")
+            report_content.append(f"Detalhes do Erro: {report.get('error', 'N/A')}")
 
+        # Combinar tudo em uma string formatada
+        return "\n".join(report_content)
 
-def create_report_message(sequence, report):
-    """
-    Cria uma mensagem Report.
-    """
-    message_type = MESSAGE_TYPES["REPORT"]
-    return struct.pack("!BBB", message_type, sequence, report)
+    except Exception as e:
+        print(f"[ERROR] Falha ao gerar o relatório: {e}")
+        return "Erro ao gerar o relatório."
