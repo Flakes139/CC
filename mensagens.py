@@ -81,7 +81,7 @@ def create_report_message(report):
 
         # Detalhes dos resultados
         report_content.append("Resultados:")
-        for i, result in enumerate(report.get("results", []), start=1):
+        for i, result in enumerate(report.get("results"), start=1):
             report_content.append(f"\n--- Tentativa {i} ---")
             if "ping" in result:
                 ping = result["ping"]

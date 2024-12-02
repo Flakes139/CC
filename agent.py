@@ -95,8 +95,7 @@ def process_task(sock, server_address, task):
                 print(f"[TASK] Monitorando RAM ({attempt}/3)...")
                 result["ram"] = metricas.get_ram_usage()
 
-            # Adicionar resultado ao relatório
-            report["results"].append(result)
+            report = {"task_id": task_id, "results": result, "status": "success"}
             time.sleep(5)  # Intervalo entre as tentativas
 
     except Exception as e:
