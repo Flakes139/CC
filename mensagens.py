@@ -6,6 +6,7 @@ MESSAGE_TYPES = {
     "ATIVA": 0x01,  # Registro
     "ACK": 0x02,    # Confirmação
     "TASK": 0x03,   # Tarefas e métricas
+    "REPORT": 0x04,
 }
 
 def create_ativa_message(sequence, agent_id):
@@ -72,3 +73,13 @@ def create_report_message(report):
     """
     report_data = json.dumps({"type": "REPORT", **report})
     return report_data.encode('utf-8')
+
+
+
+
+def create_report_message(sequence, report):
+    """
+    Cria uma mensagem Report.
+    """
+    message_type = MESSAGE_TYPES["REPORT"]
+    return struct.pack("!BBB", message_type, sequence, report)
