@@ -157,13 +157,13 @@ def udp_receiver(sock, server_address):
 
             if decoded["type"] == "TASK":
 
-                #Processar a tarefa
-                process_task(sock, server_address, decoded)
-
                 # Enviar ACK para o servidor
                 ack_message = mensagens.create_ack_message(decoded["sequence"])
                 sock.sendto(ack_message, address)
                 print(f"[UDP] ACK enviado para o servidor em {address}")
+
+                #Processar a tarefa
+                process_task(sock, server_address, decoded)
         except Exception as e:
             print(f"[UDP] Erro ao processar mensagem: {e}")
 
