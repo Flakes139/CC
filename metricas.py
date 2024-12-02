@@ -123,12 +123,20 @@ if __name__ == "__main__":
     choice = input("Opção: ")
     
     if choice == "1":
-        ping_and_store("10.0.0.10", 4)
+        result = ping_and_store("10.0.5.10", 4)
+        if result:
+            print(result)
     elif choice == "2":
-        iperf_and_store("10.0.0.10", 5201, 10)
+        result = iperf_and_store("10.0.5.10", 5201, 10)
+        if result:
+            print(result)
     elif choice == "3":
-        get_cpu_usage(1)
+        result = get_cpu_usage(1)
+        if result is not None:
+            print(f"Uso da CPU: {result}%")
     elif choice == "4":
-        get_ram_usage()
+        result = get_ram_usage()
+        if result:
+            print(f"Uso de RAM: {result}")
     else:
         print("Opção inválida.")
