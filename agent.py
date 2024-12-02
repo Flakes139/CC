@@ -67,7 +67,7 @@ def process_task(sock, server_address, task):
     metrics = task.get("metrics")
     link_metrics = task.get("link_metrics")
     alert_conditions = task.get("alert_conditions")
-    print("\n",metrics,"\n", link_metrics,"\n",alert_conditions,"\n")
+
     try:
         for attempt in range(1, 4):  # neste momento faz 3 tentativas
             result = {}
