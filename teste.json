@@ -27,8 +27,8 @@
                     "link_metrics": {
                         "latency": {
                             "ping": {
-                                "destination": "8.8.8.8",
-                                "packet_count": 5,
+                                "destination": "10.0.0.10",
+                                "count": 5,
                                 "frequency": 30
                             }
                         }
@@ -47,9 +47,9 @@
                     "link_metrics": {
                         "bandwidth": {
                             "iperf": {
-                                "role": "client",
-                                "test_duration": 10,
-                                "transport": "tcp",
+                                "server": "10.0.0.10",
+                                "duration": 10,
+                                "port": 5201,
                                 "frequency": 30
                             }
                         }
