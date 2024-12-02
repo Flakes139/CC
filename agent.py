@@ -74,21 +74,21 @@ def process_task(sock, server_address, task):
             # Executar Ping
             if "ping" in metrics:
                 print(f"[TASK] Realizando ping ({attempt}/3)...")
-                result["ping"] = metricas.ping_and_store(metrics["ping"]["host"], metrics["ping"]["count"])
+                result["ping"] = metricas.ping_and_store(metrics["ping"]["destination"], metrics["ping"]["count"])
 
             # Executar Iperf
             if "iperf" in link_metrics:
                 print(f"[TASK] Realizando iperf ({attempt}/3)...")
                 result["iperf"] = metricas.iperf_and_store(
                     link_metrics["iperf"]["server"], 
-                    link_metrics["iperf"].get("port", 5201), 
-                    link_metrics["iperf"].get("duration", 10)
+                    link_metrics["iperf"].get("port"), 
+                    link_metrics["iperf"].get("duration")
                 )
 
             # Monitorar CPU
             if "cpu" in metrics:
                 print(f"[TASK] Monitorando CPU ({attempt}/3)...")
-                result["cpu"] = metricas.get_cpu_usage(metrics["cpu"]["interval"])
+                result["cpu"] = metricas.get_cpu_usage(1)
 
             # Monitorar RAM
             if "ram" in metrics:
@@ -138,9 +138,17 @@ def send_report(sock, server_address, report):
     """
     Envia o relatório final ao servidor.
     """
-    report_message = mensagens.create_report_message(report)
-    sock.sendto(report_message, server_address)
-    print(f"[REPORT] Relatório enviado: {report}")
+    try:
+        # Certifica que o relatório está em bytes
+        report_message = mensagens.create_report_message(report)
+        if isinstance(report_message, str):  # Converte string para bytes, se necessário
+            report_message = report_message.encode('utf-8')
+        
+        sock.sendto(report_message, server_address)
+        print(f"[REPORT] Relatório enviado: {report}")
+    except Exception as e:
+        print(f"[REPORT] Erro ao enviar o relatório: {e}")
+
 
 
 def udp_receiver(sock, server_address):
@@ -157,13 +165,13 @@ def udp_receiver(sock, server_address):
 
             if decoded["type"] == "TASK":
 
+                #Processar a tarefa
+                process_task(sock, server_address, decoded)
+
                 # Enviar ACK para o servidor
                 ack_message = mensagens.create_ack_message(decoded["sequence"])
                 sock.sendto(ack_message, address)
                 print(f"[UDP] ACK enviado para o servidor em {address}")
-
-                #Processar a tarefa
-                process_task(sock, server_address, decoded)
         except Exception as e:
             print(f"[UDP] Erro ao processar mensagem: {e}")
 
