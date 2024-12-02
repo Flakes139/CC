@@ -60,6 +60,9 @@ def process_task(sock, server_address, task):
     Processa a tarefa recebida e realiza as métricas.
     Envia um relatório final ou alertflow ao servidor.
     """
+
+    print("task:", task)
+
     task_id = task.get("sequence")
     metrics = task.get("metrics")
     link_metrics = task.get("link_metrics")
