@@ -145,7 +145,7 @@ def send_report(sock, server_address, report):
             report_message = report_message.encode('utf-8')
         
         sock.sendto(report_message, server_address)
-        print(f"[REPORT] Relatório enviado: {report}")
+        print(f"[REPORT] Relatório enviado: {report_message}")
     except Exception as e:
         print(f"[REPORT] Erro ao enviar o relatório: {e}")
 
@@ -173,7 +173,7 @@ def udp_receiver(sock, server_address):
 
                 #Processar a tarefa
                 process_task(sock, server_address, decoded)
-                
+
         except Exception as e:
             print(f"[UDP] Erro ao processar mensagem: {e}")
 
