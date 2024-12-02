@@ -139,13 +139,9 @@ def send_report(sock, server_address, report):
     Envia o relatório final ao servidor.
     """
     try:
-        # Certifica que o relatório está em bytes
-        report_message = mensagens.create_report_message(report)
-        if isinstance(report_message, str):  # Converte string para bytes, se necessário
-            report_message = report_message.encode('utf-8')
-        
-        sock.sendto(report_message, server_address)
-        print(f"[REPORT] Relatório enviado: {report_message}")
+        report_message = mensagens.create_report_message(report)  # String formatada
+        sock.sendto(report_message.encode('utf-8'), server_address)  # Codificar aqui
+        print(f"[REPORT] Relatório enviado:\n{report_message}")
     except Exception as e:
         print(f"[REPORT] Erro ao enviar o relatório: {e}")
 

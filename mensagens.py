@@ -70,7 +70,7 @@ def create_alert_message(report):
 
 def create_report_message(report):
     """
-    Gera um relatório detalhado a partir do objeto report e retorna como bytes.
+    Gera um relatório detalhado a partir do objeto report e retorna como string formatada.
     """
     try:
         # Cabeçalho do relatório
@@ -110,12 +110,8 @@ def create_report_message(report):
             report_content.append(f"\n--- Erro ---")
             report_content.append(f"Detalhes do Erro: {report.get('error', 'N/A')}")
 
-        # Combinar tudo em uma string formatada e codificar como bytes
-        return "\n".join(report_content).encode('utf-8')  # Codifica como bytes
+        # Combinar tudo em uma string formatada
+        return "\n".join(report_content)  # Retorna como string formatada
     except Exception as e:
         print(f"[ERROR] Falha ao criar a mensagem de relatório: {e}")
-        return b""  # Retorna bytes vazios em caso de erro
-
-    except Exception as e:
-        print(f"[ERROR] Falha ao gerar o relatório: {e}")
-        return "Erro ao gerar o relatório."
+        return ""
