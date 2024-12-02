@@ -87,12 +87,12 @@ def process_task(sock, server_address, task):
                 )
 
             # Monitorar CPU
-            if "'cpu_usage': True" in metrics:
+            if "cpu_usage" in metrics:
                 print(f"[TASK] Monitorando CPU ({attempt}/3)...")
                 result["cpu"] = metricas.get_cpu_usage(1)
 
             # Monitorar RAM
-            if "'ram_usage': True" in metrics:
+            if "ram_usage" in metrics:
                 print(f"[TASK] Monitorando RAM ({attempt}/3)...")
                 result["ram"] = metricas.get_ram_usage()
 
