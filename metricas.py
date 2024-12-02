@@ -39,6 +39,8 @@ def ping_and_store(host, count):
         print(f"Erro: {e}")
         return None  # Retorna None em caso de erro para não afetar o fluxo
 
+        
+
 def iperf_and_store(server, port=5201, duration=10):
     try:
         result = subprocess.run(
@@ -88,6 +90,7 @@ def iperf_and_store(server, port=5201, duration=10):
         print(f"Erro: {e}")
         return None  # Retorna None em caso de erro
 
+        
 def get_cpu_usage(interval):
     try:
         cpu_usage = psutil.cpu_percent(interval=interval)
@@ -95,6 +98,7 @@ def get_cpu_usage(interval):
     except Exception as e:
         print(f"Erro ao obter o uso da CPU: {e}")
         return None  # Retornar None em caso de erro
+
 
 def get_ram_usage():
     try:
@@ -111,28 +115,20 @@ def get_ram_usage():
         return None  # Retornar None em caso de erro
 
 if __name__ == "__main__":
-    print("Escolha uma métrica para monitorar:")
-    print("1. Ping (uma vez)")
-    print("2. Iperf (uma vez)")
-    print("3. Uso da CPU (uma vez)")
-    print("4. Uso da RAM (uma vez)")
+    print("Escolha uma métrica para monitorar continuamente:")
+    print("1. Ping")
+    print("2. Iperf")
+    print("3. Uso da CPU")
+    print("4. Uso da RAM")
     choice = input("Opção: ")
     
     if choice == "1":
-        result = ping_and_store("10.0.5.10", 4)
-        if result:
-            print(result)
+        ping_and_store("10.0.5.10", 4)
     elif choice == "2":
-        result = iperf_and_store("10.0.5.10", 5201, 10)
-        if result:
-            print(result)
+        iperf_and_store("10.0.5.10", 5201, 10)
     elif choice == "3":
-        result = get_cpu_usage(1)  # Espera 1 segundo para calcular o uso
-        if result is not None:
-            print(f"Uso da CPU: {result}%")
+        get_cpu_usage(1)
     elif choice == "4":
-        result = get_ram_usage()
-        if result:
-            print(f"Uso de RAM: {result}")
+        get_ram_usage()
     else:
         print("Opção inválida.")
