@@ -75,15 +75,15 @@ def process_task(sock, server_address, task):
             # Executar Ping
             if "latency" in link_metrics:
                 print(f"[TASK] Realizando ping ({attempt}/3)...")
-                result["ping"] = metricas.ping_and_store(metrics["ping"]["destination"], metrics["ping"]["count"])
+                result["ping"] = metricas.ping_and_store(link_metrics["latency"]["ping"]["destination"], link_metrics["latency"]["ping"]["count"])
 
             # Executar Iperf
             if "bandwidth" in link_metrics:
                 print(f"[TASK] Realizando iperf ({attempt}/3)...")
                 result["iperf"] = metricas.iperf_and_store(
-                    link_metrics["iperf"]["server"], 
-                    link_metrics["iperf"].get("port"), 
-                    link_metrics["iperf"].get("duration")
+                    link_metrics["bandwidth"]["iperf"]["server"], 
+                    link_metrics["bandwidth"]["iperf"].get("port"), 
+                    link_metrics["bandwidth"]["iperf"].get("duration")
                 )
 
             # Monitorar CPU
