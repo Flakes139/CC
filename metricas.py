@@ -44,7 +44,6 @@ def ping_and_store(host, count):
         except Exception as e:
             print(f"Erro: {e}")
         
-        time.sleep(5)
 
 def iperf_and_store(server, port=5201, duration=10):
     while True:
@@ -99,8 +98,6 @@ def iperf_and_store(server, port=5201, duration=10):
         except Exception as e:
             print(f"Erro: {e}")
         
-        time.sleep(5)
-
 def get_cpu_usage(interval):
     while True:
         try:
@@ -108,8 +105,6 @@ def get_cpu_usage(interval):
             print(f"\nUso da CPU: {cpu_usage}%\n")
         except Exception as e:
             print(f"Erro ao obter o uso da CPU: {e}")
-        
-        time.sleep(5)
 
 def get_ram_usage():
     while True:
@@ -129,7 +124,6 @@ def get_ram_usage():
         except Exception as e:
             print(f"Erro ao obter o uso da RAM: {e}")
         
-        time.sleep(5)
 
 if __name__ == "__main__":
     print("Escolha uma métrica para monitorar continuamente:")
