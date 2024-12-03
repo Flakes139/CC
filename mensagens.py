@@ -59,14 +59,6 @@ def decode_message(data):
         return {"type": "TASK", "sequence": sequence, **payload}
     else:
         return {"type": "UNKNOWN", "raw_data": data}
-    
-def create_alert_message(report):
-    """
-    Cria uma mensagem de alertflow em JSON.
-    """
-    alert_data = json.dumps({"type": "ALERTFLOW", **report})
-    return alert_data.encode('utf-8')
-
 
 def create_report_message(report):
     """
@@ -120,3 +112,25 @@ def create_report_message(report):
     except Exception as e:
         print(f"[ERROR] Falha ao criar a mensagem de relatorio: {e}")
         return ""
+    
+def create_serialized_report_message(sequence, report):
+    """
+    Cria e serializa uma mensagem REPORT com base no objeto de relatório.
+    Args:
+        sequence (int): Número de sequência da mensagem.
+        report (dict): Objeto de relatório contendo os dados do relatório.
+    Returns:
+        bytes: Mensagem REPORT serializada pronta para envio.
+    """
+    try:
+        # Obter o tipo de mensagem
+        message_type = MESSAGE_TYPES["REPORT"]
+
+        # Gerar o conteúdo do relatório como string
+        report_content = create_report_message(report)  # Usa a função existente
+
+        # Serializar a mensagem combinando tipo, sequência e conteúdo
+        return struct.pack("!BB", message_type, sequence) + report_content.encode('utf-8')
+    except Exception as e:
+        print(f"[ERROR] Falha ao criar mensagem REPORT serializada: {e}")
+        return b""
