@@ -67,6 +67,35 @@ def send_with_ack(sock, message, destination, max_attempts=3):
     print("[UDP] Número máximo de tentativas atingido.")
     return False
 
+def process_report(sock, addr, decoded):
+    """
+    Processa mensagens do tipo REPORT:
+    - Dá print no conteúdo recebido.
+    - Envia um ACK com até 3 tentativas.
+    """
+    try:
+        # Print da mensagem recebida
+        print(f"[NetTask] Relatório recebido de {addr}:")
+        print(json.dumps(decoded, indent=2))
+
+        # Obtém o número de sequência da mensagem
+        sequence = decoded.get("sequence")
+        if sequence is None:
+            print(f"[NetTask] Mensagem REPORT sem sequência: {decoded}")
+            return
+
+        # Criação do ACK
+        ack_message = mensagens.create_ack_message(sequence)
+        
+        # Enviar ACK com até 3 tentativas
+        success = send_with_ack(sock, ack_message, addr)
+        if success:
+            print(f"[NetTask] ACK confirmado para {addr}.")
+        else:
+            print(f"[NetTask] Falha ao confirmar ACK para {addr} após 3 tentativas.")
+
+    except Exception as e:
+        print(f"[NetTask] Erro ao processar relatório de {addr}: {e}")
 
 def udp_server(udp_port):
     """
@@ -86,6 +115,8 @@ def udp_server(udp_port):
                 process_registration(sock, addr, decoded)
             elif decoded["type"] == "ACK":
                 print(f"[NetTask] ACK recebido do agente em {addr}.")
+            elif decoded["type"] == "REPORT":
+                process_report(decoded, addr)
             else:
                 print(f"[UDP] Tipo de mensagem desconhecido de {addr}: {decoded}")
         except Exception as e:
