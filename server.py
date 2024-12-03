@@ -198,9 +198,4 @@ if __name__ == "__main__":
 
     print("Servidor rodando. Pressione Ctrl+C para encerrar.")
 
-    try:
-        while True:
-            cpu = metricas.collect_cpu_usage()
-            print("CPU : " , cpu)
-    except KeyboardInterrupt:
-        print("\nServidor encerrado.")
+    print("\nServidor encerrado.")
