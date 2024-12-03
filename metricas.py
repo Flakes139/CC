@@ -155,7 +155,7 @@ if __name__ == "__main__":
         if result:
             print(result)
     elif choice == "3":
-        result = collect_cpu_usage()
+        result = get_cpu_usage(1)
         if result is not None:
             print(f"Uso da CPU: {result}%")
     elif choice == "4":
