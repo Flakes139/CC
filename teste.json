@@ -14,7 +14,7 @@
                     "link_metrics": {},
                     "alertflow_conditions": {
                         "cpu_usage": 80,
-                        "ram_usage": 90
+                        "ram_usage": 80
                     }
                 },
                 {
@@ -34,7 +34,7 @@
                         }
                     },
                     "alertflow_conditions": {
-                        "latency": 100
+                        "latency": 1
                     }
                 },
                 {
@@ -55,7 +55,7 @@
                         }
                     },
                     "alertflow_conditions": {
-                        "bandwidth": 50
+                        "bandwidth": 800
                     }
                 }
             ]
