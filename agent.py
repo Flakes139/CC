@@ -109,9 +109,9 @@ def process_task(sock, server_address, task, alertflow_count):
             time.sleep(5)
 
         # Criar o relatório final após as tentativas
-        print(results)
+        
         report = {"task_id": task_id, "results": results, "status": "success"}
-
+        print(report)
     except Exception as e:
         print(f"[TASK] Falha na tarefa {task_id}: {e}")
         report = {"task_id": task_id, "results": results, "status": "failed", "error": str(e)}
