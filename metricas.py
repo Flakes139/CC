@@ -41,40 +41,50 @@ def ping_and_store(host, count):
 
         
 
+import subprocess
+import re
+
 def iperf_and_store(server, port, duration):
     try:
+        # Executa o iperf3 no modo cliente
         result = subprocess.run(
             ["iperf3", "-c", server, "-p", str(port), "-t", str(duration)],
-            text=True, capture_output=True
+            text=True,
+            capture_output=True
         )
         
         if result.returncode != 0:
             raise Exception(f"Erro ao executar iperf: {result.stderr.strip()}")
         
         output = result.stdout
-        
+
+        # Regex para capturar largura de banda e transferência
         bandwidth_regex = r"(\d+\.\d+|\d+) (Mbits/sec|Gbits/sec)"
         transfer_regex = r"(\d+\.\d+|\d+) (MBytes|GBytes)"
-        
-        final_stats = re.findall(r"\[SUM\].*?(\d+\.\d+|\d+) (Mbits/sec|Gbits/sec)", output)
+
+        # Captura largura de banda (última ocorrência no log)
+        final_stats = re.findall(bandwidth_regex, output)
         transfers = re.findall(transfer_regex, output)
         
+        # Processa a largura de banda
         if final_stats:
             bandwidth_value, bandwidth_unit = final_stats[-1]
             bandwidth = float(bandwidth_value)
             if bandwidth_unit == "Gbits/sec":
-                bandwidth *= 1000
+                bandwidth *= 1000  # Converte para Mbits/sec
         else:
             bandwidth = None
-        
+
+        # Processa a transferência
         if transfers:
             transfer_value, transfer_unit = transfers[-1]
             transfer = float(transfer_value)
             if transfer_unit == "GBytes":
-                transfer *= 1000
+                transfer *= 1000  # Converte para MBytes
         else:
             transfer = None
-        
+
+        # Dados processados
         data = {
             "server": server,
             "port": port,
@@ -83,12 +93,12 @@ def iperf_and_store(server, port, duration):
             "transfer_mbytes": transfer
         }
         
-        # Retornar os dados em vez de apenas imprimir
         return data
-    
+
     except Exception as e:
         print(f"Erro: {e}")
         return None  # Retorna None em caso de erro
+
 
         
 def get_cpu_usage(interval):
