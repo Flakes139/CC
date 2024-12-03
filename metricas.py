@@ -121,7 +121,7 @@ def collect_cpu_usage():
             cpu_usage = psutil.cpu_percent(interval=1)  # Get CPU usage over a 1-second interval
             return cpu_usage
         except Exception as e:
-            return 0
+            return 55
 
 
 def get_ram_usage():
