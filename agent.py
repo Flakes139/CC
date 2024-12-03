@@ -81,7 +81,7 @@ def process_task(sock, server_address, task, alertflow_count):
                     link_metrics["latency"]["ping"]["count"]
                 )
                 if int(result["ping"].get('avg_time', 'N/A')) > alert_conditions["latency"] :
-                    send_alertflow(sock, server_address, report)
+                    send_alertflow_metric(sock, server_address, result["ping"].get('avg_time', 'N/A'))
                     alertflow_count = alertflow_count + 1
 
             if "bandwidth" in link_metrics:
@@ -92,21 +92,21 @@ def process_task(sock, server_address, task, alertflow_count):
                     link_metrics["bandwidth"]["iperf"].get("duration")
                 )
                 if int(result["iperf"].get('bandwidth_mbps', 'N/A')) < alert_conditions["bandwidth"] : 
-                    send_alertflow(sock, server_address, report)
+                    send_alertflow_metric(sock, server_address, result["iperf"].get('bandwidth_mbps', 'N/A') )
                     alertflow_count = alertflow_count + 1
 
             if metrics.get("cpu_usage") == True:
                 print(f"[TASK] Monitorando CPU ({attempt}/3)...")
                 result["cpu"] = metricas.get_cpu_usage(3)
                 if int(result["cpu"]) > alert_conditions["cpu_usage"] :
-                    send_alertflow(sock, server_address, report)
+                    send_alertflow_metric(sock, server_address,result["cpu"])
                     alertflow_count = alertflow_count + 1
 
             if metrics.get("ram_usage") == True:
                 print(f"[TASK] Monitorando RAM ({attempt}/3)...")
                 result["ram"] = metricas.get_ram_usage()
                 if int(result["ram"].get('percent', 'N/A')) > alert_conditions["ram_usage"] :
-                    send_alertflow(sock, server_address, report)
+                    send_alertflow(sock, server_address, result["ram"].get('percent', 'N/A'))
                     alertflow_count = alertflow_count + 1
 
             results.append(result)  # Adiciona o resultado desta tentativa à lista de resultados
@@ -142,6 +142,14 @@ def evaluate_alert_conditions(conditions, result):
     except Exception as e:
         print(f"[ALERT] Erro ao avaliar condição de alerta: {e}")
     return False
+
+def send_alertflow_metric(sock, server_address, result):
+    """
+    Envia um alertflow ao servidor.
+    """
+    alert_message = mensagens.create_alert_message_metric(result)
+    sock.sendto(alert_message, server_address)
+    print(f"[ALERTFLOW] Enviado: {result}")
 
 def send_alertflow(sock, server_address, report):
     """

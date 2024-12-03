@@ -67,6 +67,13 @@ def create_alert_message(report):
     alert_data = json.dumps({"type": "ALERTFLOW", **report})
     return alert_data.encode('utf-8')
 
+def create_alert_message_metric(result):
+    """
+    Cria uma mensagem de alertflow em JSON.
+    """
+    alert_data = json.dumps({"type": "ALERTFLOW", **result})
+    return alert_data.encode('utf-8')
+
 
 def create_report_message(report):
     """
