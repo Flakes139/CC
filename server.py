@@ -86,13 +86,7 @@ def process_report(sock, addr, decoded):
 
         # Criação do ACK
         ack_message = mensagens.create_ack_message(sequence)
-        
-        # Enviar ACK com até 3 tentativas
-        success = send_with_ack(sock, ack_message, addr)
-        if success:
-            print(f"[NetTask] ACK confirmado para {addr}.")
-        else:
-            print(f"[NetTask] Falha ao confirmar ACK para {addr} após 3 tentativas.")
+        sock.sendto(ack_message, addr)
 
     except Exception as e:
         print(f"[NetTask] Erro ao processar relatório de {addr}: {e}")
