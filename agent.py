@@ -152,12 +152,14 @@ def send_report(sock, server_address, report,sequence):
     Envia o relatório final ao servidor.
     """
     try:
-        report_message = mensagens.create_report_message(report)  # String formatada
-        report_message_final = mensagens.create_serialized_report_message(sequence, report_message) 
+        report_message = mensagens.create_report_message(report)  # String legível
+        report_data = {"message": report_message}  # Adicione a string em um dicionário
+        report_message_final = mensagens.create_serialized_report_message(sequence, report_data)
         sock.sendto(report_message_final, server_address)
         print(f"[REPORT] Relatório enviado: \n {report_message_final}")
     except Exception as e:
         print(f"[REPORT] Erro ao enviar o relatório: {e}")
+
 
 
 
