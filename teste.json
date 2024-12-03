@@ -49,7 +49,7 @@
                             "iperf": {
                                 "server": "10.0.0.10",
                                 "duration": 10,
-                                "port": 5201,
+                                "port": 33333,
                                 "frequency": 30
                             }
                         }
