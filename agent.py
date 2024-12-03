@@ -206,6 +206,7 @@ def udp_receiver(sock, server_address):
 
         except Exception as e:
             print(f"[UDP] Erro ao processar mensagem: {e}")
+        time.sleep(0.1)
 
 
 

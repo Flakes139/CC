@@ -117,6 +117,7 @@ def udp_server(udp_port):
                 print(f"[UDP] Tipo de mensagem desconhecido de {addr}: {decoded}")
         except Exception as e:
             print("")
+        time.sleep(0.1)
 
 
 def process_registration(sock, addr, decoded):
@@ -190,24 +191,12 @@ def send_task_to_agent(sock, agent_id):
 
 if __name__ == "__main__":
 
-    aux1 = metricas.collect_cpu_usage()
-    print("CPU : ",aux1)
-
     udp_port = initialize_server()
-
-    aux2 = metricas.collect_cpu_usage()
-    print("CPU : ", aux2)
 
     udp_server_thread = Thread(target=udp_server, args=(udp_port,), daemon=True)
     udp_server_thread.start()
 
-    aux3 = metricas.collect_cpu_usage()
-    print("CPU : ", aux3)
-
     print("Servidor rodando. Pressione Ctrl+C para encerrar.")
-
-    aux4 = metricas.collect_cpu_usage()
-    print("CPU : ", aux4)
 
     try:
         while True:

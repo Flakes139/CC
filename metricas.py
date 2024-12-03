@@ -100,16 +100,6 @@ def iperf_and_store(server, port, duration):
         return None  # Retorna None em caso de erro
 
 
-        
-def get_cpu_usage(interval):
-    try:
-        cpu_usage = psutil.cpu_percent(interval=interval)
-        return cpu_usage  # Retornar o valor da CPU
-    except Exception as e:
-        print(f"Erro ao obter o uso da CPU: {e}")
-        return None  # Retornar None em caso de erro
-
-
 def collect_cpu_usage():
         """
         Collect real CPU usage using psutil.
