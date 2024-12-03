@@ -116,7 +116,7 @@ def udp_server(udp_port):
             elif decoded["type"] == "ACK":
                 print(f"[NetTask] ACK recebido do agente em {addr}.")
             elif decoded["type"] == "REPORT":
-                process_report(decoded, addr)
+                process_report(sock, addr, decoded)
             else:
                 print(f"[UDP] Tipo de mensagem desconhecido de {addr}: {decoded}")
         except Exception as e:
