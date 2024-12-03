@@ -57,6 +57,10 @@ def decode_message(data):
         sequence = data[1]
         payload = json.loads(data[2:].decode('utf-8'))
         return {"type": "TASK", "sequence": sequence, **payload}
+    elif message_type == MESSAGE_TYPES["REPORT"]:
+        sequence = data[1]  # Obtém o número de sequência
+        report_content = data[2:].decode('utf-8')  # Decodifica o restante da mensagem como string UTF-8
+        return {"type": "REPORT", "sequence": sequence, "report": report_content}
     else:
         return {"type": "UNKNOWN", "raw_data": data}
     
@@ -76,7 +80,6 @@ def create_alert_message_metric(result):
     
     alert_data = json.dumps({"type": "ALERTFLOW", **result})
     return alert_data.encode('utf-8')
-
 
 
 def create_report_message(report):
