@@ -203,3 +203,6 @@ if __name__ == "__main__":
             pass
     except KeyboardInterrupt:
         print("\nServidor encerrado.")
+
+    cpu = metricas.collect_cpu_usage()
+    print("CPU : " , cpu)
