@@ -82,9 +82,6 @@ def create_report_message(report):
         # Detalhes dos resultados
         report_content.append("Resultados:")
         for i, result in enumerate(report.get('results'), start=1):
-            print(result)
-        '''    
-        for i, result in enumerate(report.get('results'), start=1):
             report_content.append(f"\n--- Tentativa {i} ---")
             if "ping" in result:
                 ping = result["ping"]
@@ -112,7 +109,7 @@ def create_report_message(report):
                 report_content.append(f"  Total: {ram.get('total', 'N/A')} GB")
                 report_content.append(f"  Usado: {ram.get('used', 'N/A')} GB")
                 report_content.append(f"  Percentual de Uso: {ram.get('percent', 'N/A')}%")
-'''
+
         # Adicionar erros (se houver)
         if report.get("status") == "failed":
             report_content.append(f"\n--- Erro ---")
