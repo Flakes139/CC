@@ -80,8 +80,8 @@ def process_task(sock, server_address, task, alertflow_count):
                     link_metrics["latency"]["ping"]["destination"],
                     link_metrics["latency"]["ping"]["count"]
                 )
-             #   if int(result["ping"].get('avg_time', 'N/A')) > alert_conditions["latency"] :
-               #     alertflow_count = alertflow_count + 1
+                if int(result["ping"].get('avg_time', 'N/A')) > alert_conditions["latency"] :
+                    alertflow_count = alertflow_count + 1
 
             if "bandwidth" in link_metrics:
                 print(f"[TASK] Realizando iperf ({attempt}/3)...")
@@ -90,20 +90,20 @@ def process_task(sock, server_address, task, alertflow_count):
                     link_metrics["bandwidth"]["iperf"].get("port"),
                     link_metrics["bandwidth"]["iperf"].get("duration")
                 )
-             #   if int(result["iperf"].get('bandwidth_mbps', 'N/A')) < alert_conditions["bandwidth"] : 
-              #      alertflow_count = alertflow_count + 1
+                if int(result["iperf"].get('bandwidth_mbps', 'N/A')) < alert_conditions["bandwidth"] : 
+                    alertflow_count = alertflow_count + 1
 
             if metrics.get("cpu_usage") == True:
                 print(f"[TASK] Monitorando CPU ({attempt}/3)...")
                 result["cpu"] = metricas.get_cpu_usage(3)
-              #  if int(result["cpu"]) > alert_conditions["cpu_usage"] :
-                #    alertflow_count = alertflow_count + 1
+                if int(result["cpu"]) > alert_conditions["cpu_usage"] :
+                    alertflow_count = alertflow_count + 1
 
             if metrics.get("ram_usage") == True:
                 print(f"[TASK] Monitorando RAM ({attempt}/3)...")
                 result["ram"] = metricas.get_ram_usage()
-               # if int(result["ram"].get('percent', 'N/A')) > alert_conditions["ram_usage"] :
-                #    alertflow_count = alertflow_count + 1
+                if int(result["ram"].get('percent', 'N/A')) > alert_conditions["ram_usage"] :
+                    alertflow_count = alertflow_count + 1
 
             results.append(result)  # Adiciona o resultado desta tentativa à lista de resultados
             time.sleep(5)
@@ -152,9 +152,7 @@ def send_report(sock, server_address, report,sequence):
     Envia o relatório final ao servidor.
     """
     try:
-        report_message = mensagens.create_report_message(report)  # String legível
-        report_data = {"message": report_message}  # Adicione a string em um dicionário
-        report_message_final = mensagens.create_serialized_report_message(sequence, report_data)
+        report_message_final = mensagens.create_serialized_report_message(sequence, report)
         sock.sendto(report_message_final, server_address)
         print(f"[REPORT] Relatório enviado: \n {report_message_final}")
     except Exception as e:
