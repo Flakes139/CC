@@ -78,6 +78,7 @@ def create_alert_message_metric(result):
     return alert_data.encode('utf-8')
 
 
+
 def create_report_message(report):
     """
     Gera um relatório detalhado a partir do objeto report e retorna como string formatada.
