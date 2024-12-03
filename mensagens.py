@@ -120,3 +120,14 @@ def create_report_message(report):
     except Exception as e:
         print(f"[ERROR] Falha ao criar a mensagem de relatorio: {e}")
         return ""
+
+def create_serialized_report_message(sequence, report):
+        # Obter o tipo de mensagem
+        message_type = MESSAGE_TYPES["REPORT"]
+
+        # Gerar o conteúdo do relatório como string
+        report_content = create_report_message(report)  # Usa a função existente
+
+        # Serializar a mensagem combinando tipo, sequência e conteúdo
+        return struct.pack("!BB", message_type, sequence) + report_content.encode('utf-8')
+    
