@@ -60,6 +60,7 @@ def process_task(sock, server_address, task):
     Processa a tarefa recebida e realiza as métricas.
     Envia um relatório final ou alertflow ao servidor.
     """
+    sequence = mensagens.decode_message(message).get("sequence", None)
 
     task_id = task.get("sequence")
     metrics = task.get("metrics")
@@ -109,7 +110,7 @@ def process_task(sock, server_address, task):
     if report["status"] == "failed" or any(evaluate_alert_conditions(alert_conditions, r) for r in report["results"]):
         send_alertflow(sock, server_address, report)
     else:
-        send_report(sock, server_address, report)
+        send_report(sock, server_address, report, sequence)
 
 
 
@@ -135,13 +136,14 @@ def send_alertflow(sock, server_address, report):
     sock.sendto(alert_message, server_address)
     print(f"[ALERTFLOW] Enviado: {report}")
 
-def send_report(sock, server_address, report):
+def send_report(sock, server_address, report,sequence):
     """
     Envia o relatório final ao servidor.
     """
     try:
         report_message = mensagens.create_report_message(report)  # String formatada
-        sock.sendto(report_message.encode('utf-8'), server_address)  # Codificar aqui
+        report_message_final = mensagens.create_serialized_report_message(sequence, report_message) 
+        sock.sendto(report_message_final, server_address)
         print(f"[REPORT] Relatório enviado: \n {report_message}")
     except Exception as e:
         print(f"[REPORT] Erro ao enviar o relatório: {e}")
