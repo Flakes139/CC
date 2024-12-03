@@ -68,45 +68,44 @@ def process_task(sock, server_address, task):
     link_metrics = task.get("link_metrics")
     alert_conditions = task.get("alert_conditions")
 
+    results = []
     try:
-        for attempt in range(1, 4):  # neste momento faz 3 tentativas
+        for attempt in range(1, 4):  # Loop de tentativas
             result = {}
 
-            # Executar Ping
+            # Executar métricas (ping, iperf, etc.)
             if "latency" in link_metrics:
                 print(f"[TASK] Realizando ping ({attempt}/3)...")
-                result["ping"] = metricas.ping_and_store(link_metrics["latency"]["ping"]["destination"], link_metrics["latency"]["ping"]["count"])
+                result["ping"] = metricas.ping_and_store(
+                    link_metrics["latency"]["ping"]["destination"],
+                    link_metrics["latency"]["ping"]["count"]
+                )
 
-            # Executar Iperf
             if "bandwidth" in link_metrics:
                 print(f"[TASK] Realizando iperf ({attempt}/3)...")
                 result["iperf"] = metricas.iperf_and_store(
-                    link_metrics["bandwidth"]["iperf"]["server"], 
-                    link_metrics["bandwidth"]["iperf"].get("port"), 
+                    link_metrics["bandwidth"]["iperf"]["server"],
+                    link_metrics["bandwidth"]["iperf"].get("port"),
                     link_metrics["bandwidth"]["iperf"].get("duration")
                 )
 
-            # Monitorar CPU
             if metrics.get("cpu_usage") == True:
                 print(f"[TASK] Monitorando CPU ({attempt}/3)...")
                 result["cpu"] = metricas.get_cpu_usage(1)
 
-
-            # Monitorar RAM
             if metrics.get("ram_usage") == True:
                 print(f"[TASK] Monitorando RAM ({attempt}/3)...")
                 result["ram"] = metricas.get_ram_usage()
 
-            print("results:", result)
+            results.append(result)  # Adiciona o resultado desta tentativa à lista de resultados
+            time.sleep(5)
 
-            report = {"task_id": task_id, "results": [result], "status": "success"}
-
-            time.sleep(5)  # Intervalo entre as tentativas
+        # Criar o relatório final após as tentativas
+        report = {"task_id": task_id, "results": results, "status": "success"}
 
     except Exception as e:
         print(f"[TASK] Falha na tarefa {task_id}: {e}")
-        report["status"] = "failed"
-        report["error"] = str(e)
+        report = {"task_id": task_id, "results": results, "status": "failed", "error": str(e)}
 
     # Avaliar as condições de alerta
     if report["status"] == "failed" or any(evaluate_alert_conditions(alert_conditions, r) for r in report["results"]):

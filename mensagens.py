@@ -75,7 +75,7 @@ def create_report_message(report):
     try:
         # Cabeçalho do relatório
         report_content = []
-        report_content.append(f"--- Relatório da Tarefa ---")
+        report_content.append(f"--- Relatorio da Tarefa ---")
         report_content.append(f"ID da Tarefa: {report.get('task_id')}")
         report_content.append(f"Status: {report.get('status')}\n")
 
@@ -113,5 +113,5 @@ def create_report_message(report):
         # Combinar tudo em uma string formatada
         return "\n".join(report_content)  # Retorna como string formatada
     except Exception as e:
-        print(f"[ERROR] Falha ao criar a mensagem de relatório: {e}")
+        print(f"[ERROR] Falha ao criar a mensagem de relatorio: {e}")
         return ""
