@@ -125,6 +125,7 @@ def process_task(sock, server_address, task, alertflow_count):
         alertflow_count = alertflow_count + 1
     else:
         send_report(sock, server_address, report, sequence)
+        print(alertflow_count)
 
 
 
