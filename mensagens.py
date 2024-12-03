@@ -59,6 +59,14 @@ def decode_message(data):
         return {"type": "TASK", "sequence": sequence, **payload}
     else:
         return {"type": "UNKNOWN", "raw_data": data}
+    
+def create_alert_message(report):
+    """
+    Cria uma mensagem de alertflow em JSON.
+    """
+    alert_data = json.dumps({"type": "ALERTFLOW", **report})
+    return alert_data.encode('utf-8')
+
 
 def create_report_message(report):
     """
@@ -72,6 +80,7 @@ def create_report_message(report):
         report_content.append(f"Status: {report.get('status')}\n")
 
         # Detalhes dos resultados
+        print(f"[DEBUG] Results no relatório: {report.get('results')}")
         report_content.append("Resultados:")
         for i, result in enumerate(report.get('results'), start=1):
             report_content.append(f"\n--- Tentativa {i} ---")
@@ -90,11 +99,11 @@ def create_report_message(report):
                 report_content.append("Iperf:")
                 report_content.append(f"  Servidor: {iperf.get('server')}")
                 report_content.append(f"  Largura de Banda: {iperf.get('bandwidth_mbps', 'N/A')} Mbps")
-                report_content.append(f"  Transferência: {iperf.get('transfer_mbytes', 'N/A')} MB")
+                report_content.append(f"  Transferencia: {iperf.get('transfer_mbytes', 'N/A')} MB")
 
             if "cpu" in result:
                 report_content.append(f"CPU Uso: {result['cpu']}%")
-                
+
             if "ram" in result:
                 ram = result["ram"]
                 report_content.append("RAM:")
@@ -112,17 +121,3 @@ def create_report_message(report):
     except Exception as e:
         print(f"[ERROR] Falha ao criar a mensagem de relatorio: {e}")
         return ""
-
-def create_serialized_report_message(sequence, report):
-    try:
-        # Obter o tipo de mensagem
-        message_type = MESSAGE_TYPES["REPORT"]
-
-        # Gerar o conteúdo do relatório como string
-        report_content = create_report_message(report)  # Usa a função existente
-
-        # Serializar a mensagem combinando tipo, sequência e conteúdo
-        return struct.pack("!BB", message_type, sequence) + report_content.encode('utf-8')
-    except Exception as e:
-        print(f"[ERROR] Falha ao criar mensagem REPORT serializada: {e}")
-        return b"" 
