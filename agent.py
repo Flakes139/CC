@@ -99,8 +99,8 @@ def process_task(sock, server_address, task):
 
             print("results:", result)
 
-            report = {"task_id": task_id, "results": result, "status": "success"}
-            
+            report = {"task_id": task_id, "results": [result], "status": "success"}
+
             time.sleep(5)  # Intervalo entre as tentativas
 
     except Exception as e:
