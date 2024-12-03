@@ -80,7 +80,7 @@ def process_task(sock, server_address, task, alertflow_count):
                     link_metrics["latency"]["ping"]["destination"],
                     link_metrics["latency"]["ping"]["count"]
                 )
-                if result["ping"]["avg_time"] > alert_conditions["latency"] :
+                if int(result["ping"].get('avg_time', 'N/A')) > alert_conditions["latency"] :
                     alertflow_count = alertflow_count + 1
 
             if "bandwidth" in link_metrics:
@@ -90,19 +90,19 @@ def process_task(sock, server_address, task, alertflow_count):
                     link_metrics["bandwidth"]["iperf"].get("port"),
                     link_metrics["bandwidth"]["iperf"].get("duration")
                 )
-                if result["iperf"]["bandwidth_mbps"] < alert_conditions["bandwidth"] : 
+                if int(result["iperf"].get('bandwidth_mbps', 'N/A')) < alert_conditions["bandwidth"] : 
                     alertflow_count = alertflow_count + 1
 
             if metrics.get("cpu_usage") == True:
                 print(f"[TASK] Monitorando CPU ({attempt}/3)...")
                 result["cpu"] = metricas.get_cpu_usage(3)
-                if result["cpu"] > alert_conditions["cpu_usage"] :
+                if int(result["cpu"]) > alert_conditions["cpu_usage"] :
                     alertflow_count = alertflow_count + 1
 
             if metrics.get("ram_usage") == True:
                 print(f"[TASK] Monitorando RAM ({attempt}/3)...")
                 result["ram"] = metricas.get_ram_usage()
-                if result["ram"] > alert_conditions["ram_usage"] :
+                if int(result["ram"].get('percent', 'N/A')) > alert_conditions["ram_usage"] :
                     alertflow_count = alertflow_count + 1
 
             results.append(result)  # Adiciona o resultado desta tentativa à lista de resultados
