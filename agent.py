@@ -125,7 +125,7 @@ def process_task(sock, server_address, task, alertflow_count):
         alertflow_count = alertflow_count + 1
     else:
         send_report(sock, server_address, report, sequence)
-        print(alertflow_count)
+        return alertflow_count
 
 
 
@@ -200,7 +200,7 @@ def udp_receiver(sock, server_address):
 
             # Continuar processando a tarefa atual, se existir
             if current_task and alertflow_count<3 :
-                process_task(sock, server_address, current_task, alertflow_count)
+                alertflow_count += process_task(sock, server_address, current_task, alertflow_count)
                 if alertflow_count >= 3 :
                     print("Terceiro Alertflow : Terminar agente")
 
