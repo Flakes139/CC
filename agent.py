@@ -61,8 +61,6 @@ def process_task(sock, server_address, task):
     Envia um relatório final ou alertflow ao servidor.
     """
 
-    print("task:", task)
-
     task_id = task.get("sequence")
     metrics = task.get("metrics")
     link_metrics = task.get("link_metrics")
@@ -144,7 +142,7 @@ def send_report(sock, server_address, report):
     try:
         report_message = mensagens.create_report_message(report)  # String formatada
         sock.sendto(report_message.encode('utf-8'), server_address)  # Codificar aqui
-        print(f"[REPORT] Relatório enviado:\n{report_message}")
+        print(f"[REPORT] Relatório enviado: \n {report_message}")
     except Exception as e:
         print(f"[REPORT] Erro ao enviar o relatório: {e}")
 

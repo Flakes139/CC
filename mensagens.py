@@ -89,15 +89,20 @@ def create_report_message(report):
                 report_content.append(f"  Host: {ping.get('host')}")
                 report_content.append(f"  Tempos (ms): {ping.get('times', [])}")
                 report_content.append(f"  Perda de Pacotes: {ping.get('packet_loss')}%")
-                report_content.append(f"  Tempo Máximo: {ping.get('max_time', 'N/A')} ms")
+                report_content.append(f"  Tempo Maximo: {ping.get('max_time', 'N/A')} ms")
+                report_content.append(f"  Tempo Minimo: {ping.get('min_time', 'N/A')} ms")
+                report_content.append(f"  Tempo Medio: {ping.get('avg_time', 'N/A')} ms")
+
             if "iperf" in result:
                 iperf = result["iperf"]
                 report_content.append("Iperf:")
                 report_content.append(f"  Servidor: {iperf.get('server')}")
                 report_content.append(f"  Largura de Banda: {iperf.get('bandwidth_mbps', 'N/A')} Mbps")
                 report_content.append(f"  Transferência: {iperf.get('transfer_mbytes', 'N/A')} MB")
+
             if "cpu" in result:
                 report_content.append(f"CPU Uso: {result['cpu']}%")
+                
             if "ram" in result:
                 ram = result["ram"]
                 report_content.append("RAM:")
