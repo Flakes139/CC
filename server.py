@@ -87,6 +87,7 @@ def process_report(sock, addr, decoded):
         # Criação do ACK
         ack_message = mensagens.create_ack_message(sequence)
         sock.sendto(ack_message, addr)
+        print(f"[NetTask] Ack enviado")
 
     except Exception as e:
         print(f"[NetTask] Erro ao processar relatório de {addr}: {e}")
