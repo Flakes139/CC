@@ -119,9 +119,9 @@ def collect_cpu_usage():
         """
         try:
             cpu_usage = psutil.cpu_percent(interval=1)  # Get CPU usage over a 1-second interval
-            return {"status": "success", "cpu_usage": f"{cpu_usage:.2f}%"}
+            return cpu_usage
         except Exception as e:
-            return {"status": "failure", "error": str(e)}
+            return 0
 
 
 def get_ram_usage():
@@ -155,7 +155,7 @@ if __name__ == "__main__":
         if result:
             print(result)
     elif choice == "3":
-        result = get_cpu_usage(1)
+        result = collect_cpu_usage()
         if result is not None:
             print(f"Uso da CPU: {result}%")
     elif choice == "4":
