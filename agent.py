@@ -60,7 +60,7 @@ def process_task(sock, server_address, task):
     Processa a tarefa recebida e realiza as métricas.
     Envia um relatório final ou alertflow ao servidor.
     """
-    sequence = mensagens.decode_message(message).get("sequence", None)
+    sequence = task.get("sequence")
 
     task_id = task.get("sequence")
     metrics = task.get("metrics")
