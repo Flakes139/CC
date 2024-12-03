@@ -48,7 +48,7 @@
                         "bandwidth": {
                             "iperf": {
                                 "server": "10.0.0.10",
-                                "duration": 10,
+                                "duration": 5,
                                 "port": 33333,
                                 "frequency": 30
                             }
