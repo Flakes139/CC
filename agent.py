@@ -55,7 +55,7 @@ def register_agent(sock, server_ip, udp_port, agent_id):
 
     return send_with_ack(sock, message, (server_ip, udp_port))
 
-def process_task(sock, server_address, task):
+def process_task(sock, server_address, task, alertflow_count):
     """
     Processa a tarefa recebida e realiza as métricas.
     Envia um relatório final ou alertflow ao servidor.
@@ -66,6 +66,7 @@ def process_task(sock, server_address, task):
     metrics = task.get("metrics")
     link_metrics = task.get("link_metrics")
     alert_conditions = task.get("alert_conditions")
+
 
     results = []
     try:
@@ -79,6 +80,8 @@ def process_task(sock, server_address, task):
                     link_metrics["latency"]["ping"]["destination"],
                     link_metrics["latency"]["ping"]["count"]
                 )
+                if result["ping"]["avg_time"] > alert_conditions["latency"] :
+                    alertflow_count = alertflow_count + 1
 
             if "bandwidth" in link_metrics:
                 print(f"[TASK] Realizando iperf ({attempt}/3)...")
@@ -87,14 +90,20 @@ def process_task(sock, server_address, task):
                     link_metrics["bandwidth"]["iperf"].get("port"),
                     link_metrics["bandwidth"]["iperf"].get("duration")
                 )
+                if result["iperf"]["bandwidth_mbps"] < alert_conditions["bandwidth"] : 
+                    alertflow_count = alertflow_count + 1
 
             if metrics.get("cpu_usage") == True:
                 print(f"[TASK] Monitorando CPU ({attempt}/3)...")
                 result["cpu"] = metricas.get_cpu_usage(3)
+                if result["cpu"] > alert_conditions["cpu_usage"] :
+                    alertflow_count = alertflow_count + 1
 
             if metrics.get("ram_usage") == True:
                 print(f"[TASK] Monitorando RAM ({attempt}/3)...")
                 result["ram"] = metricas.get_ram_usage()
+                if result["ram"] > alert_conditions["ram_usage"] :
+                    alertflow_count = alertflow_count + 1
 
             results.append(result)  # Adiciona o resultado desta tentativa à lista de resultados
             time.sleep(5)
@@ -107,10 +116,12 @@ def process_task(sock, server_address, task):
         report = {"task_id": task_id, "results": results, "status": "failed", "error": str(e)}
 
     # Avaliar as condições de alerta
-    if report["status"] == "failed" or any(evaluate_alert_conditions(alert_conditions, r) for r in report["results"]):
+    if report["status"] == "failed":
         send_alertflow(sock, server_address, report)
+        alertflow_count = alertflow_count + 1
     else:
         send_report(sock, server_address, report, sequence)
+
 
 
 
@@ -158,6 +169,7 @@ def udp_receiver(sock, server_address):
     print(f"[UDP] Cliente ouvindo na porta UDP {sock.getsockname()[1]}")
 
     current_task = None  # Para armazenar a tarefa atual
+    alertflow_count = 0
 
     while True:
         try:
@@ -181,8 +193,10 @@ def udp_receiver(sock, server_address):
                 pass  # Continuar caso não haja novas mensagens
 
             # Continuar processando a tarefa atual, se existir
-            if current_task:
-                process_task(sock, server_address, current_task)
+            if current_task and alertflow_count<3 :
+                process_task(sock, server_address, current_task, alertflow_count)
+                if alertflow_count >= 3 :
+                    print("Terceiro Alertflow : Terminar agente")
 
         except Exception as e:
             print(f"[UDP] Erro ao processar mensagem: {e}")
