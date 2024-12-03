@@ -80,7 +80,6 @@ def create_report_message(report):
         report_content.append(f"Status: {report.get('status')}\n")
 
         # Detalhes dos resultados
-        print(f"[DEBUG] Results no relatório: {report.get('results')}")
         report_content.append("Resultados:")
         for i, result in enumerate(report.get('results'), start=1):
             report_content.append(f"\n--- Tentativa {i} ---")
