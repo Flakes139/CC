@@ -57,7 +57,7 @@ def register_agent(sock, server_ip, udp_port, agent_id):
 
 def process_task(sock, server_address, task, alertflow_count):
     """
-    Processa a tarefa recebida e realiza as métricas.
+    Processa a tarefa recebida e realiza as metricas.
     Envia um relatório final ou alertflow ao servidor.
     """
     sequence = task.get("sequence")
