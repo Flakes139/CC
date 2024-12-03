@@ -71,6 +71,9 @@ def create_alert_message_metric(result):
     """
     Cria uma mensagem de alertflow em JSON.
     """
+    if not isinstance(result, dict):
+        raise ValueError(f"O parâmetro 'result' deve ser um dicionário, mas recebeu {type(result)}")
+    
     alert_data = json.dumps({"type": "ALERTFLOW", **result})
     return alert_data.encode('utf-8')
 

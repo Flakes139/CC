@@ -147,9 +147,16 @@ def send_alertflow_metric(sock, server_address, result):
     """
     Envia um alertflow ao servidor.
     """
+    # Envolvendo o resultado em um dicionário
+    if isinstance(result, (int, float)):
+        result = {"value": result}  # Transformar em dicionário se for um número
+    elif not isinstance(result, dict):
+        raise ValueError(f"Formato inválido para 'result': {type(result)}")
+
     alert_message = mensagens.create_alert_message_metric(result)
     sock.sendto(alert_message, server_address)
     print(f"[ALERTFLOW] Enviado: {result}")
+
 
 def send_alertflow(sock, server_address, report):
     """
