@@ -87,7 +87,7 @@ def process_task(sock, server_address, task):
                 )
 
             # Monitorar CPU
-            if "cpu_usage" is True in metrics:
+            if "cpu_usage" == True in metrics:
                 print(f"[TASK] Monitorando CPU ({attempt}/3)...")
                 result["cpu"] = metricas.get_cpu_usage(1)
 
