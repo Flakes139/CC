@@ -9,7 +9,7 @@ def initialize_agent():
     Solicita ao usuário o IP do servidor, porta UDP e ID do agente.
     """
     server_ip = input("Digite o IP do servidor: ").strip()
-    udp_port = int(input("Digite a porta UDP do servidor: ").strip())
+    udp_port = 33333
     agent_id = int(input("Digite o ID do agente: ").strip())
     return server_ip, udp_port, agent_id
 
