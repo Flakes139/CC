@@ -16,8 +16,8 @@ def initialize_server():
     """
     Solicita ao usuário a porta UDP e o caminho do JSON para configurar o servidor e inicia o servidor iperf.
     """
-    udp_port = int(input("Digite a porta UDP: ").strip())
-    json_path = input("Digite o caminho para o arquivo JSON de configuração: ").strip()
+    udp_port = 33333
+    json_path = "teste.json"
 
     # Carregar tarefas do JSON
     global TASKS
