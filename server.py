@@ -27,7 +27,7 @@ def initialize_server():
     # Inicializar o servidor iperf
     try:
         subprocess.Popen(
-            ["iperf3", "-s"],  # Inicia o iperf no modo servidor
+            ["iperf3", "-s", "-p", 33333],  # Inicia o iperf no modo servidor
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )

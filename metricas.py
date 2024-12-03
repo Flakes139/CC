@@ -44,7 +44,7 @@ def ping_and_store(host, count):
 def iperf_and_store(server, port, duration):
     try:
         result = subprocess.run(
-            ["iperf3", "-c", server],
+            ["iperf3", "-c", server, "-p", str(port), "-t", str(duration)],
             text=True, capture_output=True
         )
         
