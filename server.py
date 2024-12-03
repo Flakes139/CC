@@ -198,4 +198,8 @@ if __name__ == "__main__":
 
     print("Servidor rodando. Pressione Ctrl+C para encerrar.")
 
-    print("\nServidor encerrado.")
+    try:
+        while True:
+            time.sleep(0.1)
+    except KeyboardInterrupt:
+        print("\nServidor encerrado.")
