@@ -115,7 +115,7 @@ def udp_server(udp_port):
             else:
                 print(f"[UDP] Tipo de mensagem desconhecido de {addr}: {decoded}")
         except Exception as e:
-            print(f"[UDP] Erro ao processar mensagem de {addr}: {e}")
+            print("")
 
 
 def process_registration(sock, addr, decoded):
