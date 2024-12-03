@@ -150,29 +150,41 @@ def send_report(sock, server_address, report):
 
 def udp_receiver(sock, server_address):
     """
-    Recebe mensagens do servidor via UDP e processa as tarefas.
+    Recebe mensagens do servidor via UDP e processa as tarefas de maneira sequencial,
+    executando continuamente até que outra mensagem seja recebida.
     """
     print(f"[UDP] Cliente ouvindo na porta UDP {sock.getsockname()[1]}")
 
+    current_task = None  # Para armazenar a tarefa atual
+
     while True:
         try:
-            message, address = sock.recvfrom(1024)
-            decoded = mensagens.decode_message(message)
-            print(f"[UDP] Mensagem decodificada recebida do servidor: {decoded}")
+            # Verificar se há uma mensagem nova
+            sock.settimeout(1)  # Timeout para evitar bloqueio permanente
+            try:
+                message, address = sock.recvfrom(1024)
+                decoded = mensagens.decode_message(message)
+                print(f"[UDP] Mensagem decodificada recebida do servidor: {decoded}")
 
-            if decoded["type"] == "TASK":
+                if decoded["type"] == "TASK":
+                    # Enviar ACK para o servidor
+                    ack_message = mensagens.create_ack_message(decoded["sequence"])
+                    sock.sendto(ack_message, address)
+                    print(f"[UDP] ACK enviado para o servidor em {address}")
 
+                    # Atualizar a tarefa atual
+                    current_task = decoded
 
-                # Enviar ACK para o servidor
-                ack_message = mensagens.create_ack_message(decoded["sequence"])
-                sock.sendto(ack_message, address)
-                print(f"[UDP] ACK enviado para o servidor em {address}")
+            except socket.timeout:
+                pass  # Continuar caso não haja novas mensagens
 
-                #Processar a tarefa
-                process_task(sock, server_address, decoded)
+            # Continuar processando a tarefa atual, se existir
+            if current_task:
+                process_task(sock, server_address, current_task)
 
         except Exception as e:
             print(f"[UDP] Erro ao processar mensagem: {e}")
+
 
 
 if __name__ == "__main__":
