@@ -189,6 +189,7 @@ def send_task_to_agent(sock, agent_id):
         print(f"[NetTask] Erro ao enviar tarefa para o agente {agent_id}: {e}")
 
 
+
 def tcp_server(tcp_port):
     """
     Servidor TCP para processar conexões de clientes.
