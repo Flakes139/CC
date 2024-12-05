@@ -283,16 +283,18 @@ if __name__ == "__main__":
     udp_port = initialize_server()
     tcp_port = 44444  # Porta TCP
 
-    # Iniciar servidores UDP e TCP
+    # Iniciar servidores UDP e TCP em threads separadas
     udp_server_thread = Thread(target=udp_server, args=(udp_port,), daemon=True)
     udp_server_thread.start()
+    print("[Main] Servidor UDP iniciado.")
 
     tcp_server_thread = Thread(target=tcp_server, args=(tcp_port,), daemon=True)
     tcp_server_thread.start()
+    print("[Main] Servidor TCP iniciado.")
 
     print("Servidor rodando. Pressione Ctrl+C para encerrar.")
     try:
         while True:
-            pass
+            time.sleep(1)  # Manter o programa ativo sem consumir CPU excessivamente
     except KeyboardInterrupt:
         print("\nServidor encerrado.")
