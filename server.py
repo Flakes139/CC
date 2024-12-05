@@ -203,3 +203,96 @@ if __name__ == "__main__":
             time.sleep(0.1)
     except KeyboardInterrupt:
         print("\nServidor encerrado.")
+
+def tcp_server(tcp_port):
+    """
+    Servidor TCP para processar conexões de clientes.
+    """
+    try:
+        # Criar socket TCP
+        server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_sock.bind(('0.0.0.0', tcp_port))
+        server_sock.listen(5)  # Número máximo de conexões pendentes
+        print(f"[TCP] Servidor ouvindo na porta TCP {tcp_port}")
+
+        while True:
+            # Aceitar nova conexão
+            client_sock, client_addr = server_sock.accept()
+            print(f"[TCP] Conexão recebida de {client_addr}")
+
+            # Processar a conexão em uma thread separada
+            Thread(target=handle_tcp_connection, args=(client_sock, client_addr), daemon=True).start()
+
+    except Exception as e:
+        print(f"[TCP] Erro no servidor TCP: {e}")
+    finally:
+        server_sock.close()
+
+def handle_tcp_connection(client_sock, client_addr):
+    """
+    Processa a comunicação com um cliente TCP.
+    """
+    try:
+        with client_sock:
+            while True:
+                # Receber dados do cliente
+                data = client_sock.recv(1024)
+                if not data:
+                    print(f"[TCP] Conexão encerrada por {client_addr}")
+                    break
+
+                # Decodificar mensagem
+                decoded = mensagens.decode_message(data)
+                print(f"[TCP] Mensagem recebida de {client_addr}: {decoded}")
+
+                # Exemplo de resposta (ACK)
+                if decoded["type"] == "ATIVA":
+                    sequence = decoded.get("sequence")
+                    ack_message = mensagens.create_ack_message(sequence)
+                    client_sock.sendall(ack_message)
+                    print(f"[TCP] ACK enviado para {client_addr}")
+
+                elif decoded["type"] == "REPORT":
+                    # Processar relatório recebido
+                    process_report_tcp(client_sock, decoded)
+
+                else:
+                    print(f"[TCP] Tipo de mensagem desconhecido de {client_addr}: {decoded}")
+    except Exception as e:
+        print(f"[TCP] Erro ao processar conexão de {client_addr}: {e}")
+
+def process_report_tcp(client_sock, decoded):
+    """
+    Processa mensagens do tipo REPORT recebidas via TCP.
+    """
+    try:
+        # Print da mensagem recebida
+        print(f"[NetTask - TCP] Relatório recebido:")
+        print(json.dumps(decoded, indent=2))
+
+        # Enviar ACK para o cliente
+        sequence = decoded.get("sequence")
+        if sequence is not None:
+            ack_message = mensagens.create_ack_message(sequence)
+            client_sock.sendall(ack_message)
+            print(f"[NetTask - TCP] ACK enviado")
+    except Exception as e:
+        print(f"[NetTask - TCP] Erro ao processar relatório: {e}")
+
+if __name__ == "__main__":
+    udp_port = initialize_server()
+    tcp_port = 44444  # Porta TCP
+
+    # Iniciar servidores UDP e TCP
+    udp_server_thread = Thread(target=udp_server, args=(udp_port,), daemon=True)
+    udp_server_thread.start()
+
+    tcp_server_thread = Thread(target=tcp_server, args=(tcp_port,), daemon=True)
+    tcp_server_thread.start()
+
+    print("Servidor rodando. Pressione Ctrl+C para encerrar.")
+    try:
+        while True:
+            pass
+    except KeyboardInterrupt:
+        print("\nServidor encerrado.")
