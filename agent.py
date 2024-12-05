@@ -98,7 +98,8 @@ def process_task(sock, server_address, task, alertflow_count):
             if metrics.get("cpu_usage") == True:
                 print(f"[TASK] Monitorando CPU ({attempt}/3)...")
                 result["cpu"] = metricas.collect_cpu_usage()
-                if int(result["cpu"]) > alert_conditions["cpu_usage"] :
+                if 1>0 : 
+                #if int(result["cpu"]) > alert_conditions["cpu_usage"] :
                     send_alertflow_metric(sock, server_address,result["cpu"],alert_conditions["cpu_usage"])
                     alertflow_count = alertflow_count + 1
 
