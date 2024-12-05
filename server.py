@@ -266,6 +266,7 @@ def process_report_tcp(client_sock, decoded):
         print(f"[NetTask - TCP] Erro ao processar relatório: {e}")
 
     if __name__ == "_main_":
+        
         udp_port = initialize_server()
         tcp_port = 44444  # Porta TCP
 
@@ -279,8 +280,9 @@ def process_report_tcp(client_sock, decoded):
         print("[Main] Servidor TCP iniciado.")
 
         print("Servidor rodando. Pressione Ctrl+C para encerrar.")
+
         try:
             while True:
-                time.sleep(1)  # Manter o programa ativo sem consumir CPU excessivamente
+                pass  # Manter o programa ativo sem consumir CPU excessivamente
         except KeyboardInterrupt:
-            print("\nServidor encerrado.")
+            print("\nServidor encerrado.")
