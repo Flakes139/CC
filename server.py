@@ -189,21 +189,6 @@ def send_task_to_agent(sock, agent_id):
         print(f"[NetTask] Erro ao enviar tarefa para o agente {agent_id}: {e}")
 
 
-if __name__ == "__main__":
-
-    udp_port = initialize_server()
-
-    udp_server_thread = Thread(target=udp_server, args=(udp_port,), daemon=True)
-    udp_server_thread.start()
-
-    print("Servidor rodando. Pressione Ctrl+C para encerrar.")
-
-    try:
-        while True:
-            time.sleep(0.1)
-    except KeyboardInterrupt:
-        print("\nServidor encerrado.")
-
 def tcp_server(tcp_port):
     """
     Servidor TCP para processar conexões de clientes.
