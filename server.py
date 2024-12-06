@@ -175,6 +175,7 @@ def send_task_to_agent(sock, agent_id):
         # Obtém o IP do servidor
         server_ip = sock.getsockname()[0]  # Obtém o IP local do servidor
         # Substituir 'server' e 'destination' pelo IP do servidor
+        print(server_ip)
         task = replace_ip(task,server_ip)  # Aplica a substituição no task
 
         task_message = mensagens.create_task_message(
