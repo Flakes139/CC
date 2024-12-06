@@ -78,3 +78,4 @@ def carregar_tarefas(caminho_ficheiro):
     except Exception as e:
         print(f"[Erro] Falha ao carregar o JSON: {e}")
         return []
+    
