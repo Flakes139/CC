@@ -113,7 +113,7 @@ def process_task(sock, server_address, task, alertflow_count):
             time.sleep(5)
 
         # Criar o relatório final após as tentativas
-
+    
         report = {"task_id": task_id, "results": results, "status": "success"}
     except Exception as e:
         print(f"[TASK] Falha na tarefa {task_id}: {e}")
@@ -122,10 +122,11 @@ def process_task(sock, server_address, task, alertflow_count):
     # Avaliar as condições de alerta
     if report["status"] == "failed":
         send_alertflow(sock, server_address, report)
-        alertflow_count = alertflow_count + 1
+        alertflow_count += 1
     else:
         send_report(sock, server_address, report, sequence)
         return alertflow_count
+    return 0
 
 
 
@@ -200,7 +201,7 @@ def udp_receiver(sock, server_address):
 
             # Continuar processando a tarefa atual, se existir
             if current_task and alertflow_count<3 :
-                alertflow_count = process_task(sock, server_address, current_task, alertflow_count)
+                alertflow_count += process_task(sock, server_address, current_task, alertflow_count)
                 if alertflow_count >= 3 :
                     print("Terceiro Alertflow : Terminar agente")
 
