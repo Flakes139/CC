@@ -179,15 +179,12 @@ def send_task_to_agent(sock, agent_id):
             sequence=1,
             metrics=task["device_metrics"],
             link_metrics=task["link_metrics"],
-            alert_conditions=task["alertflow_conditions"]
-            alert_conditions=None 
+             alert_conditions=None 
         )
         print(f"[DEBUG] Tamanho da mensagem de tarefa: {len(task_message)}")
 
         agent_addr = AGENTS[agent_id]
-        send_with_ack(sock, task_message, agent_addr)
-    except Exception as e:
-        print(f"[NetTask] Erro ao enviar tarefa para o agente {agent_id}: {e}")
+
         if not send_with_ack(sock, task_message, agent_addr):
             print(f"[NetTask] Erro ao enviar tarefa para o agente {agent_id}: {e}")
             return 
@@ -306,18 +303,6 @@ def process_report_tcp(client_sock, decoded):
     except Exception as e:
         print(f"[NetTask - TCP] Erro ao processar relatório: {e}")
 
-    if __name__ == "_main_":
-        
-        udp_port = initialize_server()
-        tcp_port = 44444  # Porta TCP
-        # Iniciar servidores UDP e TCP em threads separadas
-        udp_server_thread = Thread(target=udp_server, args=(udp_port,), daemon=True)
-        udp_server_thread.start()
-        print("[Main] Servidor UDP iniciado.")
-        tcp_server_thread = Thread(target=tcp_server, args=(tcp_port,), daemon=True)
-        tcp_server_thread.start()
-        print("[Main] Servidor TCP iniciado.")
-        print("Servidor rodando. Pressione Ctrl+C para encerrar.")
 if __name__ == "__main__":
     """
     Inicia servidores UDP e TCP em threads separadas.
@@ -338,10 +323,3 @@ if __name__ == "__main__":
         while True:
             pass
     except KeyboardInterrupt:
-        print("\n[Main] Servidores encerrados.")
-
-        try:
-            while True:
-                pass  # Manter o programa ativo sem consumir CPU excessivamente
-        except KeyboardInterrupt:
-            print("\nServidor encerrado.")
