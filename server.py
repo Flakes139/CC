@@ -246,6 +246,7 @@ def handle_tcp_connection(client_sock, client_addr):
     except Exception as e:
         print(f"[TCP] Erro ao processar conexão de {client_addr}: {e}")
 
+
 def send_alertflow_tcp(agent_id, alert_conditions):
     """
     Envia alertflow_conditions para o agente via TCP.
