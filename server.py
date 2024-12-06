@@ -241,10 +241,6 @@ def handle_tcp_connection(client_sock, client_addr):
                     client_sock.sendall(ack_message)
                     print(f"[TCP] ACK enviado para {client_addr}")
 
-                elif decoded["type"] == "REPORT":
-                    # Processar relatório recebido
-                    process_report_tcp(client_sock, decoded)
-
                 else:
                     print(f"[TCP] Tipo de mensagem desconhecido de {client_addr}: {decoded}")
     except Exception as e:
@@ -289,23 +285,8 @@ def send_alertflow_tcp(agent_id, alert_conditions):
     except Exception as e:
         print(f"[NetTask] Erro ao enviar alertflow para o agente {agent_id}: {e}")
 
-def process_report_tcp(client_sock, decoded):
-    """
-    Processa mensagens do tipo REPORT recebidas via TCP.
-    """
-    try:
-        # Print da mensagem recebida
-        print(f"[NetTask - TCP] Relatório recebido:")
-        print(json.dumps(decoded, indent=2))
 
-        # Enviar ACK para o cliente
-        sequence = decoded.get("sequence")
-        if sequence is not None:
-            ack_message = mensagens.create_ack_message(sequence)
-            client_sock.sendall(ack_message)
-            print(f"[NetTask - TCP] ACK enviado")
-    except Exception as e:
-        print(f"[NetTask - TCP] Erro ao processar relatório: {e}")
+
 
 if __name__ == "__main__":
     """
