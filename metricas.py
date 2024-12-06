@@ -5,6 +5,7 @@ import re
 
 def ping_and_store(host, count):
     try:
+        print("ping", host, "-c", str(count))
         result = subprocess.run(
             ["ping", host, "-c", str(count)],
             text=True, capture_output=True
