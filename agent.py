@@ -205,7 +205,7 @@ def udp_receiver(sock, server_address):
                 alertflow_count += process_task(sock, server_address, current_task, alertflow_count)
                 if alertflow_count >= 3 :
                     print("Terceiro Alertflow : Terminar agente")
-                time.sleep(frequency)
+                time.sleep(int(frequency))
 
         except Exception as e:
             print(f"[UDP] Erro ao processar mensagem: {e}")
