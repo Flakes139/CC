@@ -47,6 +47,7 @@ import re
 def iperf_and_store(server, port, duration):
     try:
         # Executa o iperf3 no modo cliente
+        print("iperf3", "-c", server, "-p", str(port), "-t", str(duration))
         result = subprocess.run(
             ["iperf3", "-c", server, "-p", str(port), "-t", str(duration)],
             text=True,
