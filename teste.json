@@ -27,7 +27,7 @@
                     "link_metrics": {
                         "latency": {
                             "ping": {
-                                "destination": "10.0.0.10",
+                                "destination": "x.x.x.x",
                                 "count": 5,
                                 "frequency": 30
                             }
@@ -47,7 +47,7 @@
                     "link_metrics": {
                         "bandwidth": {
                             "iperf": {
-                                "server": "10.0.0.10",
+                                "server": "x.x.x.x",
                                 "duration": 5,
                                 "port": 33333,
                                 "frequency": 30
@@ -68,14 +68,14 @@
                     "link_metrics": {
                         "latency": {
                             "ping": {
-                                "destination": "10.0.0.10",
+                                "destination": "x.x.x.x",
                                 "count": 5,
                                 "frequency": 30
                             }
                         },
                         "bandwidth": {
                             "iperf": {
-                                "server": "10.0.0.10",
+                                "server": "x.x.x.x",
                                 "duration": 5,
                                 "port": 33333,
                                 "frequency": 30
