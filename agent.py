@@ -199,7 +199,7 @@ def udp_receiver(sock, server_address):
 
             except socket.timeout:
                 pass  # Continuar caso não haja novas mensagens
-            frequency = task.get("frequency")
+            frequency = current_task.get("frequency")
             # Continuar processando a tarefa atual, se existir
             if current_task and alertflow_count<3 :
                 alertflow_count += process_task(sock, server_address, current_task, alertflow_count)
