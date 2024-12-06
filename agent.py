@@ -87,9 +87,9 @@ def process_task(sock, server_address, task, alertflow_count):
             if "bandwidth" in link_metrics:
                 print(f"[TASK] Realizando iperf ({attempt}/3)...")
                 result["iperf"] = metricas.iperf_and_store(
-                    link_metrics["bandwidth"]["iperf"].get["server"],
-                    link_metrics["bandwidth"]["iperf"].get["port"],
-                    link_metrics["bandwidth"]["iperf"].get["duration"]
+                    link_metrics["bandwidth"]["iperf"]["server"],
+                    link_metrics["bandwidth"]["iperf"].get("port"),
+                    link_metrics["bandwidth"]["iperf"].get("duration")
                 )
                 if int(result["iperf"].get('bandwidth_mbps', 'N/A')) < alert_conditions["bandwidth"] : 
                     send_alertflow_metric(sock, server_address, result["iperf"].get('bandwidth_mbps', 'N/A'), alert_conditions["bandwidth"] )
