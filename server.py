@@ -179,148 +179,27 @@ def send_task_to_agent(sock, agent_id):
             sequence=1,
             metrics=task["device_metrics"],
             link_metrics=task["link_metrics"],
-             alert_conditions=None 
+            alert_conditions=task["alertflow_conditions"]
         )
         print(f"[DEBUG] Tamanho da mensagem de tarefa: {len(task_message)}")
 
         agent_addr = AGENTS[agent_id]
-
-        if not send_with_ack(sock, task_message, agent_addr):
-            print(f"[NetTask] Erro ao enviar tarefa para o agente {agent_id}: {e}")
-            return 
-
-        # Enviar alertflow_conditions via TCP
-        send_alertflow_tcp(agent_id, task["alertflow_conditions"])
-    except Exception as e: 
+        send_with_ack(sock, task_message, agent_addr)
+    except Exception as e:
         print(f"[NetTask] Erro ao enviar tarefa para o agente {agent_id}: {e}")
 
-def tcp_server(tcp_port):
-    """
-    Servidor TCP para processar conexões de clientes.
-    """
-    try:
-        # Criar socket TCP
-        server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server_sock.bind(('0.0.0.0', tcp_port))
-        server_sock.listen(5)  # Número máximo de conexões pendentes
-        print(f"[TCP] Servidor ouvindo na porta TCP {tcp_port}")
-
-        while True:
-            # Aceitar nova conexão
-            client_sock, client_addr = server_sock.accept()
-            print(f"[TCP] Conexão recebida de {client_addr}")
-
-            # Processar a conexão em uma thread separada
-            Thread(target=handle_tcp_connection, args=(client_sock, client_addr), daemon=True).start()
-
-    except Exception as e:
-        print(f"[TCP] Erro no servidor TCP: {e}")
-    finally:
-        server_sock.close()
-
-def handle_tcp_connection(client_sock, client_addr):
-    """
-    Processa a comunicação com um cliente TCP.
-    """
-    try:
-        with client_sock:
-            while True:
-                # Receber dados do cliente
-                data = client_sock.recv(1024)
-                if not data:
-                    print(f"[TCP] Conexão encerrada por {client_addr}")
-                    break
-
-                # Decodificar mensagem
-                decoded = mensagens.decode_message(data)
-                print(f"[TCP] Mensagem recebida de {client_addr}: {decoded}")
-
-                # Exemplo de resposta (ACK)
-                if decoded["type"] == "ATIVA":
-                    sequence = decoded.get("sequence")
-                    ack_message = mensagens.create_ack_message(sequence)
-                    client_sock.sendall(ack_message)
-                    print(f"[TCP] ACK enviado para {client_addr}")
-
-                elif decoded["type"] == "REPORT":
-                    # Processar relatório recebido
-                    process_report_tcp(client_sock, decoded)
-
-                else:
-                    print(f"[TCP] Tipo de mensagem desconhecido de {client_addr}: {decoded}")
-    except Exception as e:
-        print(f"[TCP] Erro ao processar conexão de {client_addr}: {e}")
-
-def send_alertflow_tcp(agent_id, alert_conditions):
-    """
-    Envia alertflow_conditions para o agente via TCP.
-    """
-    try:
-        # Obtém o endereço do agente
-        agent_addr = AGENTS.get(agent_id)
-        if not agent_addr:
-            print(f"[NetTask] Agente {agent_id} não encontrado na lista de registrados.")
-            return
-        
-        agent_ip, agent_port = agent_addr
-        tcp_port = 44444  # Porta TCP definida no servidor do agente
-        # Conectar ao agente via TCP
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as tcp_sock:
-            tcp_sock.connect((agent_ip, tcp_port))
-            print(f"[TCP] Conexão estabelecida com {agent_ip}:{tcp_port}")
-            # Criar mensagem para alertflow
-            alertflow_message = mensagens.create_alertflow_message(
-                sequence=1,  # Substitua pelo mecanismo de sequência apropriado
-                alert_conditions=alert_conditions
-            )
-            # Enviar a mensagem ao agente
-            tcp_sock.sendall(alertflow_message)
-            print(f"[TCP] Alertflow enviado ao agente {agent_id}")
-            # Aguardar confirmação ou ACK
-            response = tcp_sock.recv(1024)
-            decoded = mensagens.decode_message(response)
-            if decoded.get("type") == "ACK":
-                print(f"[TCP] Alertflow confirmado pelo agente {agent_id}")
-            else:
-                print(f"[TCP] Resposta inesperada do agente {agent_id}: {decoded}")
-    except Exception as e:
-        print(f"[NetTask] Erro ao enviar alertflow para o agente {agent_id}: {e}")
-def process_report_tcp(client_sock, decoded):
-    """
-    Processa mensagens do tipo REPORT recebidas via TCP.
-    """
-    try:
-        # Print da mensagem recebida
-        print(f"[NetTask - TCP] Relatório recebido:")
-        print(json.dumps(decoded, indent=2))
-
-        # Enviar ACK para o cliente
-        sequence = decoded.get("sequence")
-        if sequence is not None:
-            ack_message = mensagens.create_ack_message(sequence)
-            client_sock.sendall(ack_message)
-            print(f"[NetTask - TCP] ACK enviado")
-    except Exception as e:
-        print(f"[NetTask - TCP] Erro ao processar relatório: {e}")
 
 if __name__ == "__main__":
-    """
-    Inicia servidores UDP e TCP em threads separadas.
-    """
-    udp_port = initialize_server()  # Inicializar configurações do servidor
-    tcp_port = 44444               # Porta TCP
-    # Criar e iniciar a thread para o servidor UDP
-    udp_thread = Thread(target=udp_server, args=(udp_port,), daemon=True)
-    udp_thread.start()
-    print("[Main] Servidor UDP iniciado.")
-    # Criar e iniciar a thread para o servidor TCP
-    tcp_thread = Thread(target=tcp_server, args=(tcp_port,), daemon=True)
-    tcp_thread.start()
-    print("[Main] Servidor TCP iniciado.")
-    time.sleep(1)
-    print("Servidores rodando. Pressione Ctrl+C para encerrar.")
+
+    udp_port = initialize_server()
+
+    udp_server_thread = Thread(target=udp_server, args=(udp_port,), daemon=True)
+    udp_server_thread.start()
+
+    print("Servidor rodando. Pressione Ctrl+C para encerrar.")
+
     try:
         while True:
-            pass
+            time.sleep(0.1)
     except KeyboardInterrupt:
-        print("\n[Main] Servidores encerrados.")
+        print("\nServidor encerrado.")
