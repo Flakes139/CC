@@ -158,7 +158,21 @@ def replace_ip(obj, server_ip):
             for item in obj:
                 obj = replace_ip(item,server_ip)
         return obj
-                
+
+def get_server_ip():
+    """
+    Retorna o endereço IP do servidor onde o script está sendo executado.
+    """
+    try:
+        # Conecta-se a um servidor externo para determinar o IP local
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            # Tenta conectar a um IP externo para descobrir o IP local (não envia dados reais)
+            s.connect(("8.8.8.8", 80))
+            ip_address = s.getsockname()[0]
+        return ip_address
+    except Exception as e:
+        print(f"Erro ao obter o endereço IP do servidor: {e}")
+        return "127.0.0.1"  # Retorna localhost como fallback
 
 
 def send_task_to_agent(sock, agent_id):
@@ -173,7 +187,7 @@ def send_task_to_agent(sock, agent_id):
 
     try:
         # Obtém o IP do servidor
-        server_ip = sock.getsockname()[0]  # Obtém o IP local do servidor
+        server_ip = get_server_ip()  # Obtém o IP local do servidor
         # Substituir 'server' e 'destination' pelo IP do servidor
         print(server_ip)
         task = replace_ip(task,server_ip)  # Aplica a substituição no task
