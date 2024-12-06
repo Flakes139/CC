@@ -56,17 +56,43 @@ def register_agent(sock, server_ip, udp_port, agent_id):
 
     return send_with_ack(sock, message, (server_ip, udp_port))
 
+def send_tcp_message(server_ip, tcp_port, message):
+    """
+    Envia uma mensagem TCP para o servidor especificado e retorna a resposta.
+    """
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as tcp_socket:
+            tcp_socket.connect((server_ip, tcp_port))
+            print(f"[TCP] Conectado ao servidor em {server_ip}:{tcp_port}")
+            
+            # Enviar a mensagem
+            tcp_socket.sendall(message)
+            print(f"[TCP] Mensagem enviada: {mensagens.decode_message(message)}")
+            
+            # Receber resposta
+            response = tcp_socket.recv(1024)
+            decoded_response = mensagens.decode_message(response)
+            print(f"[TCP] Resposta recebida: {decoded_response}")
+            return decoded_response
+    except Exception as e:
+        print(f"[TCP] Erro na comunicação TCP: {e}")
+        return None
+
 def process_task(sock, server_address, task, alertflow_count, tcp_port):
     """
     Processa a tarefa recebida e realiza as metricas.
     Envia um relatório final ou alertflow ao servidor.
     """
-    sequence = task.get("sequence")
 
-    task_id = task.get("sequence")
-    metrics = task.get("metrics")
-    link_metrics = task.get("link_metrics")
-    alert_conditions = task.get("alert_conditions")
+    if not task:
+        print("[TASK] Tarefa recebida é inválida (NoneType).")
+        return alertflow_count
+
+    sequence = task.get("sequence", 0)
+    task_id = task.get("sequence", 0)
+    metrics = task.get("metrics", {})
+    link_metrics = task.get("link_metrics", {})
+    alert_conditions = task.get("alert_conditions", {})
 
 
     results = []
