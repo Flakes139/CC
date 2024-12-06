@@ -189,9 +189,11 @@ def send_task_to_agent(sock, agent_id):
             return 
 
         # Enviar alertflow_conditions via TCP
-        send_alertflow_tcp(agent_id, task["alertflow_conditions"])
-    except Exception as e: 
-        print(f"[NetTask] Erro ao enviar tarefa para o agente {agent_id}: {e}")
+        if not task.get("alertflow_conditions"):
+            print(f"[NetTask] Nenhum alertflow_conditions para o agente {agent_id}.")
+        else:
+            send_alertflow_tcp(agent_id, task["alertflow_conditions"])
+
 
 def tcp_server(tcp_port):
     """
@@ -263,6 +265,8 @@ def send_alertflow_tcp(agent_id, alert_conditions):
 
         # Conectar ao agente via TCP
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as tcp_sock:
+            tcp_sock.settimeout(10) # Define timeout para conexões TCP
+            print(f"[TCP] Tentando conectar ao agente {agent_id} em {agent_ip}:{tcp_port}")
             tcp_sock.connect((agent_ip, tcp_port))
             print(f"[TCP] Conexão estabelecida com {agent_ip}:{tcp_port}")
 
@@ -283,6 +287,9 @@ def send_alertflow_tcp(agent_id, alert_conditions):
                 print(f"[TCP] Alertflow confirmado pelo agente {agent_id}")
             else:
                 print(f"[TCP] Resposta inesperada do agente {agent_id}: {decoded}")
+   
+    except socket.timeout: 
+        print(f"[TCP] Timeout na conexão com o agente {agent_id}. Verifique conectividade.")
     except Exception as e:
         print(f"[NetTask] Erro ao enviar alertflow para o agente {agent_id}: {e}")
 
