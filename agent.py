@@ -214,9 +214,9 @@ def udp_receiver(sock, server_address):
                 pass  # Continuar caso não haja novas mensagens
 
             # Continuar processando a tarefa atual, se existir
-            if current_task and alertflow_count<3 :
+            if current_task and int(alertflow_count) <3 :
                 alertflow_count = process_task(sock, server_address, current_task, int(alertflow_count)) 
-                if alertflow_count >= 3 :
+                if int(alertflow_count) >= 3 :
                     print("Terceiro Alertflow : Terminar agente")
                 time.sleep()
 
