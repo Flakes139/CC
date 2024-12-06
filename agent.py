@@ -10,9 +10,8 @@ def initialize_agent():
     """
     server_ip = input("Digite o IP do servidor: ").strip()
     udp_port = 33333
-    tcp_port = 44444
     agent_id = int(input("Digite o ID do agente: ").strip())
-    return server_ip, udp_port, tcp_port, agent_id
+    return server_ip, udp_port, agent_id
 
 
 def send_with_ack(sock, message, destination, max_attempts=3):
@@ -56,43 +55,17 @@ def register_agent(sock, server_ip, udp_port, agent_id):
 
     return send_with_ack(sock, message, (server_ip, udp_port))
 
-def send_tcp_message(server_ip, tcp_port, message):
-    """
-    Envia uma mensagem TCP para o servidor especificado e retorna a resposta.
-    """
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as tcp_socket:
-            tcp_socket.connect((server_ip, tcp_port))
-            print(f"[TCP] Conectado ao servidor em {server_ip}:{tcp_port}")
-            
-            # Enviar a mensagem
-            tcp_socket.sendall(message)
-            print(f"[TCP] Mensagem enviada: {mensagens.decode_message(message)}")
-            
-            # Receber resposta
-            response = tcp_socket.recv(1024)
-            decoded_response = mensagens.decode_message(response)
-            print(f"[TCP] Resposta recebida: {decoded_response}")
-            return decoded_response
-    except Exception as e:
-        print(f"[TCP] Erro na comunicação TCP: {e}")
-        return None
-
-def process_task(sock, server_address, task, alertflow_count, tcp_port):
+def process_task(sock, server_address, task, alertflow_count):
     """
     Processa a tarefa recebida e realiza as metricas.
     Envia um relatório final ou alertflow ao servidor.
     """
+    sequence = task.get("sequence")
 
-    if not task:
-        print("[TASK] Tarefa recebida é inválida (NoneType).")
-        return alertflow_count
-
-    sequence = task.get("sequence", 0)
-    task_id = task.get("sequence", 0)
-    metrics = task.get("metrics", {})
-    link_metrics = task.get("link_metrics", {})
-    alert_conditions = task.get("alert_conditions", {})
+    task_id = task.get("sequence")
+    metrics = task.get("metrics")
+    link_metrics = task.get("link_metrics")
+    alert_conditions = task.get("alert_conditions")
 
 
     results = []
@@ -108,7 +81,7 @@ def process_task(sock, server_address, task, alertflow_count, tcp_port):
                     link_metrics["latency"]["ping"]["count"]
                 )
                 if int(result["ping"].get('avg_time', 'N/A')) > alert_conditions["latency"] :
-                    send_alertflow_metric(sock, server_address, result["ping"].get('avg_time', 'N/A'), alert_conditions["latency"], tcp_port)
+                    send_alertflow_metric(sock, server_address, result["ping"].get('avg_time', 'N/A'), alert_conditions["latency"])
                     alertflow_count = alertflow_count + 1
 
             if "bandwidth" in link_metrics:
@@ -119,15 +92,15 @@ def process_task(sock, server_address, task, alertflow_count, tcp_port):
                     link_metrics["bandwidth"]["iperf"].get("duration")
                 )
                 if int(result["iperf"].get('bandwidth_mbps', 'N/A')) < alert_conditions["bandwidth"] : 
-                    send_alertflow_metric(sock, server_address, result["iperf"].get('bandwidth_mbps', 'N/A'), alert_conditions["bandwidth"], tcp_port)
+                    send_alertflow_metric(sock, server_address, result["iperf"].get('bandwidth_mbps', 'N/A'), alert_conditions["bandwidth"] )
                     alertflow_count = alertflow_count + 1
 
             if metrics.get("cpu_usage") == True:
                 print(f"[TASK] Monitorando CPU ({attempt}/3)...")
                 result["cpu"] = metricas.collect_cpu_usage()
-                if 1>0 : 
+                if 1>0 :
                 #if int(result["cpu"]) > alert_conditions["cpu_usage"] :
-                    send_alertflow_metric(sock, server_address,result["cpu"],alert_conditions["cpu_usage"], tcp_port)
+                    send_alertflow_metric(sock, server_address,result["cpu"],alert_conditions["cpu_usage"])
                     alertflow_count = alertflow_count + 1
 
             if metrics.get("ram_usage") == True:
@@ -157,28 +130,29 @@ def process_task(sock, server_address, task, alertflow_count, tcp_port):
 
 
 
-def send_alertflow_metric(sock, server_address, result, alert_condition, tcp_port):
+def send_alertflow_metric(sock, server_address, result, alert_condition):
     """
     Envia um alertflow ao servidor.
     """
-    try:
-        # Envolvendo o resultado em um dicionário
-        if isinstance(result, (int, float)):
-            result = {"value": result}  # Transformar em dicionário se for um número
+    # Envolvendo o resultado em um dicionário
+    if isinstance(result, (int, float)):
+        result = {"value": result}  # Transformar em dicionário se for um número
 
-        result["alert_condition"] = alert_condition  # Adicionar a condição de alerta
-    
-        alert_message = mensagens.create_alert_message_metric(result)
-    
-        # Enviar o alertflow via TCP
-        response = send_tcp_message(server_address[0], tcp_port, alert_message)
-        if response:
-            print(f"[ALERTFLOW - TCP] Alertflow enviado e resposta recebida: {response}")
-        else:
-            print("[ALERTFLOW - TCP] Falha ao enviar alertflow.")
-    except Exception as e:
-        print(f"[ALERTFLOW] Erro ao enviar alertflow: {e}")
+    result["alert_condition"] = alert_condition  # Adicionar a condição de alerta
 
+    alert_message = mensagens.create_alert_message_metric(result)
+    sock.sendto(alert_message, server_address)
+    print(f"[ALERTFLOW] Enviado: {result}")
+
+
+def send_alertflow(sock, server_address, report):
+    """
+    Envia um alertflow ao servidor.
+    """
+    alert_message = mensagens.create_alert_message(report)
+    sock.sendto(alert_message, server_address)
+    print(f"[ALERTFLOW] Enviado: {report}")
+'''
 def send_alertflow(server_ip, tcp_port, report):
     """
     Envia um alertflow ao servidor via TCP.
@@ -195,27 +169,16 @@ def send_alertflow(server_ip, tcp_port, report):
             print(f"[ALERTFLOW - TCP] Falha ao enviar alertflow.")
     except Exception as e:
         print(f"[ALERTFLOW] Erro ao enviar o alertflow: {e}")
+'''
 
-def send_report(sock, server_address, report, sequence, protocol="udp", tcp_port=None):
+def send_report(sock, server_address, report,sequence):
     """
-    Envia o relatório final ao servidor, usando UDP ou TCP.
+    Envia o relatório final ao servidor.
     """
     try:
         report_message_final = mensagens.create_serialized_report_message(sequence, report)
-        
-        if protocol == "udp":
-            # Envio via UDP
-            sock.sendto(report_message_final, server_address)
-            print(f"[REPORT - UDP] Relatório enviado: \n {report_message_final}")
-        elif protocol == "tcp" and tcp_port:
-            # Envio via TCP
-            response = send_tcp_message(server_address[0], tcp_port, report_message_final)
-            if response:
-                print(f"[REPORT - TCP] Relatório enviado e resposta recebida: {response}")
-            else:
-                print(f"[REPORT - TCP] Falha ao enviar relatório.")
-        else:
-            print(f"[REPORT] Protocolo inválido ou porta TCP ausente.")
+        sock.sendto(report_message_final, server_address)
+        print(f"[REPORT] Relatório enviado: \n {report_message_final}")
     except Exception as e:
         print(f"[REPORT] Erro ao enviar o relatório: {e}")
 
@@ -253,9 +216,10 @@ def udp_receiver(sock, server_address):
 
             # Continuar processando a tarefa atual, se existir
             if current_task and alertflow_count<3 :
-                alertflow_count += process_task(sock, server_address, current_task, alertflow_count, tcp_port)
+                alertflow_count += process_task(sock, server_address, current_task, alertflow_count)
                 if alertflow_count >= 3 :
                     print("Terceiro Alertflow : Terminar agente")
+                time.sleep()
 
         except Exception as e:
             print(f"[UDP] Erro ao processar mensagem: {e}")
@@ -264,7 +228,7 @@ def udp_receiver(sock, server_address):
 
 
 if __name__ == "__main__":
-    server_ip, udp_port, tcp_port, agent_id = initialize_agent()
+    server_ip, udp_port, agent_id = initialize_agent()
 
     # Criar uma única socket para todo o ciclo de vida do agente
     agent_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -312,3 +276,21 @@ def send_tcp_message(server_ip, tcp_port, message):
         print(f"[TCP] Erro na comunicação TCP: {e}")
         return None
 
+
+"""
+
+
+user os getters tem de ser tudo apontadores (user*) 
+
+no user.c ter uma função create user que recebe os varios campos 
+e devolve um user point 
+
+
+criar um gestor que depois chama o parser generico e ele 
+é que faz a divisao dos campos para o seu lado 
+
+
+
+
+
+"""
