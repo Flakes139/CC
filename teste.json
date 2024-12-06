@@ -57,7 +57,38 @@
                     "alertflow_conditions": {
                         "bandwidth": 800
                     }
+                },
+                {
+                    "device_id": "4",
+                    "device_metrics": {
+                        "cpu_usage": true,
+                        "ram_usage": true,
+                        "interface_stats": []
+                    },
+                    "link_metrics": {
+                        "latency": {
+                            "ping": {
+                                "destination": "10.0.0.10",
+                                "count": 5,
+                                "frequency": 30
+                            },
+                        "bandwidth": {
+                            "iperf": {
+                                "server": "10.0.0.10",
+                                "duration": 5,
+                                "port": 33333,
+                                "frequency": 30
+                            }
+                        }
+                    },
+                    "alertflow_conditions": {
+                        "bandwidth": 800,
+                        "latency": 1,
+                        "cpu_usage": 80,
+                        "ram_usage": 80    
+                    }
                 }
+
             ]
         }
     ]
