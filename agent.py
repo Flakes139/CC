@@ -67,7 +67,6 @@ def process_task(sock, server_address, task, alertflow_count):
     link_metrics = task.get("link_metrics")
     alert_conditions = task.get("alert_conditions")
 
-
     results = []
     try:
         for attempt in range(1, 4):  # Loop de tentativas
@@ -216,7 +215,8 @@ def udp_receiver(sock, server_address):
 
             # Continuar processando a tarefa atual, se existir
             if current_task and alertflow_count<3 :
-                alertflow_count += process_task(sock, server_address, current_task, alertflow_count)
+                auxiliar = process_task(sock, server_address, current_task, alertflow_count)
+                alertflow_count = alertflow_count + auxiliar
                 if alertflow_count >= 3 :
                     print("Terceiro Alertflow : Terminar agente")
                 time.sleep()
