@@ -238,7 +238,7 @@ def udp_receiver(sock, server_address):
 
 
 if __name__ == "__main__":
-    server_ip, udp_port, agent_id = initialize_agent()
+    server_ip, udp_port, tcp_port, agent_id = initialize_agent()
 
     # Criar uma única socket para todo o ciclo de vida do agente
     agent_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
