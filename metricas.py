@@ -73,7 +73,7 @@ def iperf_and_store(server, port, duration):
             if bandwidth_unit == "Gbits/sec":
                 bandwidth *= 1000  # Converte para Mbits/sec
         else:
-            bandwidth = None
+            bandwidth = 0  # Valor padrão em caso de erro
 
         # Processa a transferência
         if transfers:
@@ -82,7 +82,7 @@ def iperf_and_store(server, port, duration):
             if transfer_unit == "GBytes":
                 transfer *= 1000  # Converte para MBytes
         else:
-            transfer = None
+            transfer = 0  # Valor padrão em caso de erro
 
         # Dados processados
         data = {
@@ -94,6 +94,18 @@ def iperf_and_store(server, port, duration):
         }
         
         return data
+
+    except Exception as e:
+        print(f"[iperf_and_store] Erro: {e}")
+        # Retorna um dicionário com informações mínimas
+        return {
+            "server": server,
+            "port": port,
+            "duration": duration,
+            "bandwidth_mbps": 0,  # Largura de banda inválida
+            "transfer_mbytes": 0,  # Transferência inválida
+            "error": str(e)  # Mensagem de erro para depuração
+        }
 
     except Exception as e:
         print(f"Erro: {e}")
