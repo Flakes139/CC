@@ -147,6 +147,19 @@ def process_registration(sock, addr, decoded):
     except Exception as e:
         print(f"[UDP] Erro ao processar registro de {addr}: {e}")
 
+def replace_ip(obj, server_ip):
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                if key in ["server", "destination"]:
+                    obj[key] = server_ip
+                elif isinstance(value, (dict, list)):
+                    value = replace_ip(value, server_ip)
+        elif isinstance(obj, list):
+            for item in obj:
+                obj = replace_ip(item,server_ip)
+        return obj
+                
+
 
 def send_task_to_agent(sock, agent_id):
     """
@@ -162,18 +175,7 @@ def send_task_to_agent(sock, agent_id):
         # Obtém o IP do servidor
         server_ip = sock.getsockname()[0]  # Obtém o IP local do servidor
         # Substituir 'server' e 'destination' pelo IP do servidor
-        def replace_ip(obj):
-            if isinstance(obj, dict):
-                for key, value in obj.items():
-                    if key in ["server", "destination"]:
-                        obj[key] = server_ip
-                    elif isinstance(value, (dict, list)):
-                        replace_ip(value)
-            elif isinstance(obj, list):
-                for item in obj:
-                    replace_ip(item)
-
-        replace_ip(task)  # Aplica a substituição no task
+        task = replace_ip(task,server_ip)  # Aplica a substituição no task
 
         task_message = mensagens.create_task_message(
             sequence=1,
