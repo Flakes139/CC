@@ -140,12 +140,8 @@ def process_task(sock, server_address, task, alertflow_count, tcp_port):
                     )
                     if int(result["ping"].get('avg_time', 'N/A')) > alert_conditions["latency"]:
                         send_alertflow_metric(sock, server_address, result["ping"].get('avg_time', 'N/A'), alert_conditions["latency"], tcp_port)
-                        alertflow_count += 1
-            except Exception as e:
-                print(f"[TASK] Erro ao processar métrica de latência: {e}")
-
+                        alertflow_count += 1               
             # Outras métricas
-            try:
                 if "bandwidth" in link_metrics:
                     print(f"[TASK] Realizando iperf ({attempt}/3)...")
                     result["iperf"] = metricas.iperf_and_store(
@@ -155,11 +151,21 @@ def process_task(sock, server_address, task, alertflow_count, tcp_port):
                     )
                     if int(result["iperf"].get('bandwidth_mbps', 'N/A')) < alert_conditions["bandwidth"]:
                         send_alertflow_metric(sock, server_address, result["iperf"].get('bandwidth_mbps', 'N/A'), alert_conditions["bandwidth"], tcp_port)
-                        alertflow_count += 1
-            except Exception as e:
-                print(f"[TASK] Erro ao processar métrica de largura de banda: {e}")
-
+                        alertflow_count += 1               
             # Adicionar mais métricas conforme necessário
+                if metrics.get("cpu_usage") == True:
+                    print(f"[TASK] Monitorando CPU ({attempt}/3)...")
+                    result["cpu"] = metricas.collect_cpu_usage()
+                    if int(result["cpu"]) > alert_conditions["cpu_usage"] :
+                        send_alertflow_metric(sock, server_address,result["cpu"],alert_conditions["cpu_usage"], tcp_port)
+                        alertflow_count = alertflow_count + 1
+
+                if metrics.get("ram_usage") == True:
+                    print(f"[TASK] Monitorando RAM ({attempt}/3)...")
+                    result["ram"] = metricas.get_ram_usage()
+                    if int(result["ram"].get('percent', 'N/A')) > alert_conditions["ram_usage"] :
+                        send_alertflow(sock, server_address, result["ram"].get('percent', 'N/A'),alert_conditions["ram_usage"])
+                        alertflow_count = alertflow_count + 1
 
             results.append(result)  # Adiciona o resultado desta tentativa
             time.sleep(5)
