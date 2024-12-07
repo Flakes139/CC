@@ -154,5 +154,6 @@ def create_serialized_report_message(sequence, report):
         report_content = create_report_message(report)  # Usa a função existente
 
         # Serializar a mensagem combinando tipo, sequência e conteúdo
+        print(f"[REPORT] Relatório enviado: \n {report_content}")
         return struct.pack("!BB", message_type, sequence) + report_content.encode('utf-8')
     

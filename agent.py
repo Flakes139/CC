@@ -194,7 +194,6 @@ def send_report(sock, server_address, report,sequence):
     try:
         report_message_final = mensagens.create_serialized_report_message(sequence, report)
         sock.sendto(report_message_final, server_address)
-        print(f"[REPORT] Relatório enviado: \n {report_message_final}")
     except Exception as e:
         print(f"[REPORT] Erro ao enviar o relatório: {e}")
 
