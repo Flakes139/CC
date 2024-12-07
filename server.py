@@ -267,6 +267,8 @@ if __name__ == "__main__":
     tcp_server_thread = Thread(target=tcp_server, args=(tcp_port,), daemon=True)
     tcp_server_thread.start()
 
+    time.sleep(0.1)
+
     print("Servidor rodando. Pressione Ctrl+C para encerrar.")
 
     try:
