@@ -112,7 +112,7 @@ def send_alertflow(sock, server_address, report, tcp_port):
     print(f"[ALERTFLOW] Enviado: {report}")
 
 
-def process_task(sock, server_address, task, alertflow_count):
+def process_task(sock, server_address, task, alertflow_count, tcp_port):
     """
     Processa a tarefa recebida e realiza as metricas.
     Envia um relatório final ou alertflow ao servidor.
