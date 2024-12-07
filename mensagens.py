@@ -6,7 +6,8 @@ MESSAGE_TYPES = {
     "ATIVA": 0x01,  # Registro
     "ACK": 0x02,    # Confirmação
     "TASK": 0x03,   # Tarefas e métricas
-    "REPORT": 0x04,
+    "REPORT": 0x04, # Relatórios
+    "ALERTFLOW": 0x05 # Alertas
 }
 
 def create_ativa_message(sequence, agent_id):
@@ -61,26 +62,29 @@ def decode_message(data):
         sequence = data[1]  # Obtém o número de sequência
         report_content = data[2:].decode('utf-8')  # Decodifica o restante da mensagem como string UTF-8
         return {"type": "REPORT", "sequence": sequence, "report": report_content}
+    elif message_type == MESSAGE_TYPES["ALERTFLOW"]:
+        sequence = data[1]
+        alert_content = json.loads(data[2:].decode('utf-8'))
+        return {"type": "ALERTFLOW", "sequence": sequence, **alert_content}
     else:
         return {"type": "UNKNOWN", "raw_data": data}
     
+# Função para criar uma mensagem ALERTFLOW
 def create_alert_message(report, sequence):
     """
-    Cria uma mensagem ALERTFLOW com o mesmo formato que REPORT.
+    Cria uma mensagem ALERTFLOW específica.
     """
-    message_type = MESSAGE_TYPES["REPORT"]  # ALERTFLOW também usa tipo REPORT
-    report["type"] = "ALERTFLOW"  # Indicar que é um ALERTFLOW
-    report_content = create_report_message(report)
+    message_type = MESSAGE_TYPES["ALERTFLOW"]
+    report_content = create_report_message(report)  # Usa o mesmo formato de relatório
     return struct.pack("!BB", message_type, sequence) + report_content.encode('utf-8')
 
 def create_alert_message_metric(result, sequence):
     """
     Cria uma mensagem ALERTFLOW baseada em métricas.
     """
-    message_type = MESSAGE_TYPES["REPORT"]  # ALERTFLOW também usa tipo REPORT
-    result["type"] = "ALERTFLOW"
-    alert_content = json.dumps(result)
-    return struct.pack("!BB", message_type, sequence) + alert_content.encode('utf-8')
+    message_type = MESSAGE_TYPES["ALERTFLOW"]
+    alert_content = json.dumps(result).encode('utf-8')
+    return struct.pack("!BB", message_type, sequence) + alert_content
 
 
 def create_report_message(report):
