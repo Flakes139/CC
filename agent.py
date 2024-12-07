@@ -108,9 +108,11 @@ def send_alertflow(sock, server_address, report, tcp_port):
     Envia um alertflow ao servidor.
     """
     alert_message = mensagens.create_alert_message(report)
-    send_tcp_message(server_address[0], tcp_port, alert_message)  # Corrigido para usar server_address[0]
-    print(f"[ALERTFLOW] Enviado: {report}")
-
+    response = send_tcp_message(server_address[0], tcp_port, alert_message)
+    if response: 
+        print(f"[ALERTFLOW - TCP] Alertflow enviado com sucesso: {response}")
+    else:
+        print("[ALERTFLOW - TCP] Falha ao enviar alertflow.")
 
 def process_task(sock, server_address, task, alertflow_count, tcp_port):
     """
@@ -182,8 +184,9 @@ def process_task(sock, server_address, task, alertflow_count, tcp_port):
         alertflow_count += 1
     else:
         send_report(sock, server_address, report, sequence)
-        return alertflow_count
-    return 0
+        
+    return alertflow_count
+
 def send_report(sock, server_address, report,sequence):
     """
     Envia o relatório final ao servidor.
