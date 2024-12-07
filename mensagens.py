@@ -105,7 +105,7 @@ def create_report_message(report):
 
             if "ping" in result:
                 ping = result["ping"]
-                report_content.append("🏓 Ping:")
+                report_content.append(" Ping:")
                 report_content.append(f"  Host: {ping.get('host')}")
                 report_content.append(f"  Tempos (ms): {ping.get('times', [])}")
                 report_content.append(f"  Perda de Pacotes: {ping.get('packet_loss')}%")
@@ -139,7 +139,7 @@ def create_report_message(report):
         report_content.append(f"{' Fim do Relatorio ':*^50}")
 
         # Combinar tudo em uma string formatada
-        return "\n".join(report_content)
+        return "\r\n".join(report_content)
     except Exception as e:
         print(f"[ERROR] Falha ao criar a mensagem de relatorio: {e}")
         return ""
