@@ -29,7 +29,7 @@
                             "ping": {
                                 "destination": "x.x.x.x",
                                 "count": 5,
-                                "frequency": 30
+                                "frequency": 10
                             }
                         }
                     },
@@ -50,7 +50,7 @@
                                 "server": "x.x.x.x",
                                 "duration": 5,
                                 "port": 33333,
-                                "frequency": 30
+                                "frequency": 10
                             }
                         }
                     },
@@ -70,7 +70,7 @@
                             "ping": {
                                 "destination": "x.x.x.x",
                                 "count": 5,
-                                "frequency": 30
+                                "frequency": 10
                             }
                         },
                         "bandwidth": {
@@ -78,7 +78,7 @@
                                 "server": "x.x.x.x",
                                 "duration": 5,
                                 "port": 33333,
-                                "frequency": 30
+                                "frequency": 10
                             }
                         }
                     },

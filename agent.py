@@ -165,7 +165,7 @@ def process_task(sock, server_address, task, alertflow_count, tcp_port):
                 print(f"[TASK] Monitorando RAM ({attempt}/3)...")
                 result["ram"] = metricas.get_ram_usage()
                 if int(result["ram"].get('percent', 'N/A')) > alert_conditions["ram_usage"] :
-                    send_alertflow(sock, server_address, result["ram"].get('percent', 'N/A'),alert_conditions["ram_usage"], tcp_port)
+                    send_alertflow_metric(sock, server_address, result["ram"].get('percent', 'N/A'),alert_conditions["ram_usage"], tcp_port)
                     alertflow_count = alertflow_count + 1
 
             results.append(result)  # Adiciona o resultado desta tentativa à lista de resultados
