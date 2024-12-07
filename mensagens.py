@@ -86,7 +86,6 @@ def create_alert_message_metric(result, sequence):
     alert_content = json.dumps(result).encode('utf-8')
     return struct.pack("!BB", message_type, sequence) + alert_content
 
-
 def create_report_message(report):
     """
     Gera um relatório detalhado a partir do objeto report e retorna como string formatada.
@@ -94,48 +93,58 @@ def create_report_message(report):
     try:
         # Cabeçalho do relatório
         report_content = []
-        report_content.append(f"--- Relatorio da Tarefa ---")
+        report_content.append("=" * 50)
+        report_content.append(f"{' Relatorio da Tarefa ':=^50}")
+        report_content.append("=" * 50)
         report_content.append(f"ID da Tarefa: {report.get('task_id')}")
         report_content.append(f"Status: {report.get('status')}\n")
-        
+
         # Detalhes dos resultados
-        report_content.append("Resultados:")
+        report_content.append("-" * 50)
+        report_content.append("Resultados Detalhados:\n")
+
         for i, result in enumerate(report.get('results'), start=1):
-            report_content.append(f"\n--- Tentativa {i} ---")
+            report_content.append(f"{' Tentativa ' + str(i) + ' ':=^50}")
+
             if "ping" in result:
                 ping = result["ping"]
                 report_content.append("Ping:")
-                report_content.append(f"  Host: {ping.get('host')}")
-                report_content.append(f"  Tempos (ms): {ping.get('times', [])}")
-                report_content.append(f"  Perda de Pacotes: {ping.get('packet_loss')}%")
-                report_content.append(f"  Tempo Maximo: {ping.get('max_time', 'N/A')} ms")
-                report_content.append(f"  Tempo Minimo: {ping.get('min_time', 'N/A')} ms")
-                report_content.append(f"  Tempo Medio: {ping.get('avg_time', 'N/A')} ms")
+                report_content.append(f"Host: {ping.get('host')}")
+                report_content.append(f"Tempos (ms): {ping.get('times', [])}")
+                report_content.append(f"Perda de Pacotes: {ping.get('packet_loss')}%")
+                report_content.append(f"Tempo Maximo: {ping.get('max_time', 'N/A')} ms")
+                report_content.append(f"Tempo Minimo: {ping.get('min_time', 'N/A')} ms")
+                report_content.append(f"Tempo Medio: {ping.get('avg_time', 'N/A')} ms\n")
 
             if "iperf" in result:
                 iperf = result["iperf"]
                 report_content.append("Iperf:")
-                report_content.append(f"  Servidor: {iperf.get('server')}")
-                report_content.append(f"  Largura de Banda: {iperf.get('bandwidth_mbps', 'N/A')} Mbps")
-                report_content.append(f"  Transferencia: {iperf.get('transfer_mbytes', 'N/A')} MB")
+                report_content.append(f"Servidor: {iperf.get('server')}")
+                report_content.append(f"Largura de Banda: {iperf.get('bandwidth_mbps', 'N/A')} Mbps")
+                report_content.append(f"Transferencia: {iperf.get('transfer_mbytes', 'N/A')} MB\n")
 
             if "cpu" in result:
-                report_content.append(f"CPU Uso: {result['cpu']}%")
+                report_content.append(f"CPU Uso: {result['cpu']}%\n")
 
             if "ram" in result:
                 ram = result["ram"]
                 report_content.append("RAM:")
-                report_content.append(f"  Total: {ram.get('total', 'N/A')} GB")
-                report_content.append(f"  Usado: {ram.get('used', 'N/A')} GB")
-                report_content.append(f"  Percentual de Uso: {ram.get('percent', 'N/A')}%")
+                report_content.append(f"Total: {ram.get('total', 'N/A')} GB")
+                report_content.append(f"Usado: {ram.get('used', 'N/A')} GB")
+                report_content.append(f"Percentual de Uso: {ram.get('percent', 'N/A')}%\n")
 
         # Adicionar erros (se houver)
         if report.get("status") == "failed":
-            report_content.append(f"\n--- Erro ---")
+            report_content.append(f"{' Erro ':!^50}")
             report_content.append(f"Detalhes do Erro: {report.get('error', 'N/A')}")
 
+        # Rodapé
+        report_content.append("=" * 50)
+        report_content.append(f"{' Fim do Relatorio ':=^50}")
+        report_content.append("=" * 50)
+
         # Combinar tudo em uma string formatada
-        return "\n".join(report_content)  # Retorna como string formatada
+        return "\n".join(report_content)
     except Exception as e:
         print(f"[ERROR] Falha ao criar a mensagem de relatorio: {e}")
         return ""
