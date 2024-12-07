@@ -12,7 +12,7 @@ def initialize_agent():
     udp_port = 33333
     tcp_port = 44444
     agent_id = int(input("Digite o ID do agente: ").strip())
-    return server_ip, udp_port, agent_id
+    return server_ip, udp_port, tcp_port, agent_id
 
 
 def send_with_ack(sock, message, destination, max_attempts=3):
@@ -56,96 +56,47 @@ def register_agent(sock, server_ip, udp_port, agent_id):
 
     return send_with_ack(sock, message, (server_ip, udp_port))
 
-def process_task(sock, server_address, task, alertflow_count):
+def send_tcp_message(server_ip, tcp_port, message, max_attempts=3):
     """
-    Processa a tarefa recebida e realiza as metricas.
-    Envia um relatório final ou alertflow ao servidor.
+    Envia uma mensagem via TCP para o servidor e espera por uma resposta.
+    Inclui lógica para reconexão em caso de falhas.
     """
-    sequence = task.get("sequence")
+    for attempt in range(max_attempts):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as tcp_sock:
+                tcp_sock.settimeout(3)  # Timeout de 3 segundos
+                tcp_sock.connect((server_ip, tcp_port))
+                print(f"[TCP] Conectado ao servidor TCP em {server_ip}:{tcp_port} (Tentativa {attempt + 1})")
 
-    task_id = task.get("sequence")
-    metrics = task.get("metrics")
-    link_metrics = task.get("link_metrics")
-    alert_conditions = task.get("alert_conditions")
+                # Enviar a mensagem
+                tcp_sock.sendall(message)
+                print(f"[TCP] Mensagem enviada: {mensagens.decode_message(message)}")
 
+                # Receber a resposta
+                ack = tcp_sock.recv(1024)
+                decoded_response = mensagens.decode_message(ack)
+                print(f"[TCP] Resposta do servidor: {decoded_response}")
 
-    results = []
-    try:
-        for attempt in range(1, 4):  # Loop de tentativas
-            result = {}
+                return decoded_response  # Sucesso
+        except (socket.timeout, Exception) as e:
+            print(f"[TCP] Erro na comunicação TCP (Tentativa {attempt + 1}): {e}")
+            time.sleep(3)  # Esperar antes de tentar novamente
 
-            # Executar métricas (ping, iperf, etc.)
-            if "latency" in link_metrics:
-                print(f"[TASK] Realizando ping ({attempt}/3)...")
-                result["ping"] = metricas.ping_and_store(
-                    link_metrics["latency"]["ping"]["destination"],
-                    link_metrics["latency"]["ping"]["count"]
-                )
-                if int(result["ping"].get('avg_time', 'N/A')) > alert_conditions["latency"] :
-                    send_alertflow_metric(sock, server_address, result["ping"].get('avg_time', 'N/A'), alert_conditions["latency"])
-                    alertflow_count = alertflow_count + 1
-
-            if "bandwidth" in link_metrics:
-                print(f"[TASK] Realizando iperf ({attempt}/3)...")
-                result["iperf"] = metricas.iperf_and_store(
-                    link_metrics["bandwidth"]["iperf"].get("server"),
-                    link_metrics["bandwidth"]["iperf"].get("port"),
-                    link_metrics["bandwidth"]["iperf"].get("duration")
-                )
-                if int(result["iperf"].get('bandwidth_mbps', 'N/A')) < alert_conditions["bandwidth"] : 
-                    send_alertflow_metric(sock, server_address, result["iperf"].get('bandwidth_mbps', 'N/A'), alert_conditions["bandwidth"] )
-                    alertflow_count = alertflow_count + 1
-
-            if metrics.get("cpu_usage") == True:
-                print(f"[TASK] Monitorando CPU ({attempt}/3)...")
-                result["cpu"] = metricas.collect_cpu_usage()
-                if int(result["cpu"]) > alert_conditions["cpu_usage"] :
-                    send_alertflow_metric(sock, server_address,result["cpu"],alert_conditions["cpu_usage"])
-                    alertflow_count = alertflow_count + 1
-
-            if metrics.get("ram_usage") == True:
-                print(f"[TASK] Monitorando RAM ({attempt}/3)...")
-                result["ram"] = metricas.get_ram_usage()
-                if int(result["ram"].get('percent', 'N/A')) > alert_conditions["ram_usage"] :
-                    send_alertflow(sock, server_address, result["ram"].get('percent', 'N/A'),alert_conditions["ram_usage"])
-                    alertflow_count = alertflow_count + 1
-
-            results.append(result)  # Adiciona o resultado desta tentativa à lista de resultados
-            time.sleep(5)
-
-        # Criar o relatório final após as tentativas
-    
-        report = {"task_id": task_id, "results": results, "status": "success"}
-    except Exception as e:
-        print(f"[TASK] Falha na tarefa {task_id}: {e}")
-        report = {"task_id": task_id, "results": results, "status": "failed", "error": str(e)}
-
-    # Avaliar as condições de alerta
-    if report["status"] == "failed":
-        send_alertflow(sock, server_address, report)
-        alertflow_count += 1
-    else:
-        send_report(sock, server_address, report, sequence)
-        return alertflow_count
-    return 0
-
-
+    print("[TCP] Falha após todas as tentativas de conexão.")
+    return None
 
 def send_alertflow_metric(sock, server_address, result, alert_condition, tcp_port):
     """
     Envia um alertflow ao servidor.
     """
-    
-        # Envolvendo o resultado em um dicionário
     if isinstance(result, (int, float)):
         result = {"value": result}  # Transformar em dicionário se for um número
 
     result["alert_condition"] = alert_condition  # Adicionar a condição de alerta
-    
     alert_message = mensagens.create_alert_message_metric(result)
-    
-        # Enviar o alertflow via TCP
-    response = send_tcp_message(server_address[0], tcp_port, alert_message)
+
+    # Enviar o alertflow via TCP
+    response = send_tcp_message(server_address[0], tcp_port, alert_message)  # Corrigido para usar server_address[0]
     if response:
         print(f"[ALERTFLOW - TCP] Alertflow enviado e resposta recebida: {response}")
     else:
@@ -157,8 +108,75 @@ def send_alertflow(sock, server_address, report, tcp_port):
     Envia um alertflow ao servidor.
     """
     alert_message = mensagens.create_alert_message(report)
-    send_tcp_message(server_address, tcp_port, alert_message)
+    send_tcp_message(server_address[0], tcp_port, alert_message)  # Corrigido para usar server_address[0]
     print(f"[ALERTFLOW] Enviado: {report}")
+
+
+def process_task(sock, server_address, task, alertflow_count, tcp_port):
+    """
+    Processa a tarefa recebida e realiza as métricas.
+    """
+    sequence = task.get("sequence")
+    task_id = task.get("sequence")
+    metrics = task.get("metrics")
+    link_metrics = task.get("link_metrics")
+    alert_conditions = task.get("alert_conditions")
+    results = []
+
+    try:
+        for attempt in range(1, 4):  # Loop de tentativas
+            if alertflow_count >= 3:
+                print("[TASK] Limite de ALERTFLOW alcançado. Encerrando processamento.")
+                break
+
+            result = {}
+
+            try:
+                if "latency" in link_metrics:
+                    print(f"[TASK] Realizando ping ({attempt}/3)...")
+                    result["ping"] = metricas.ping_and_store(
+                        link_metrics["latency"]["ping"]["destination"],
+                        link_metrics["latency"]["ping"]["count"]
+                    )
+                    if int(result["ping"].get('avg_time', 'N/A')) > alert_conditions["latency"]:
+                        send_alertflow_metric(sock, server_address, result["ping"].get('avg_time', 'N/A'), alert_conditions["latency"], tcp_port)
+                        alertflow_count += 1
+            except Exception as e:
+                print(f"[TASK] Erro ao processar métrica de latência: {e}")
+
+            # Outras métricas
+            try:
+                if "bandwidth" in link_metrics:
+                    print(f"[TASK] Realizando iperf ({attempt}/3)...")
+                    result["iperf"] = metricas.iperf_and_store(
+                        link_metrics["bandwidth"]["iperf"].get("server"),
+                        link_metrics["bandwidth"]["iperf"].get("port"),
+                        link_metrics["bandwidth"]["iperf"].get("duration")
+                    )
+                    if int(result["iperf"].get('bandwidth_mbps', 'N/A')) < alert_conditions["bandwidth"]:
+                        send_alertflow_metric(sock, server_address, result["iperf"].get('bandwidth_mbps', 'N/A'), alert_conditions["bandwidth"], tcp_port)
+                        alertflow_count += 1
+            except Exception as e:
+                print(f"[TASK] Erro ao processar métrica de largura de banda: {e}")
+
+            # Adicionar mais métricas conforme necessário
+
+            results.append(result)  # Adiciona o resultado desta tentativa
+            time.sleep(5)
+
+        report = {"task_id": task_id, "results": results, "status": "success"}
+    except Exception as e:
+        print(f"[TASK] Falha na tarefa {task_id}: {e}")
+        report = {"task_id": task_id, "results": results, "status": "failed", "error": str(e)}
+
+    if report["status"] == "failed":
+        send_alertflow(sock, server_address, report, tcp_port)
+        alertflow_count += 1
+    else:
+        send_report(sock, server_address, report, sequence)
+
+    return alertflow_count
+
 
 def send_report(sock, server_address, report,sequence):
     """
@@ -174,7 +192,7 @@ def send_report(sock, server_address, report,sequence):
 
 
 
-def udp_receiver(sock, server_address):
+def udp_receiver(sock, server_address, tcp_port):
     """
     Recebe mensagens do servidor via UDP e processa as tarefas de maneira sequencial,
     executando continuamente até que outra mensagem seja recebida.
@@ -208,9 +226,11 @@ def udp_receiver(sock, server_address):
          
             # Continuar processando a tarefa atual, se existir
             if current_task and alertflow_count<3 :
-                alertflow_count += process_task(sock, server_address, current_task, alertflow_count)
+                alertflow_count += process_task(sock, server_address, current_task, alertflow_count, tcp_port)
                 if alertflow_count >= 3 :
                     print("Terceiro Alertflow : Terminar agente")
+                    sock.close()
+                    break
                 time.sleep(10)
 
         except Exception as e:
@@ -231,7 +251,7 @@ if __name__ == "__main__":
         server_address = (server_ip, udp_port)
 
         # Iniciar o receptor UDP somente se o registro foi bem-sucedido
-        udp_receiver_thread = Thread(target=udp_receiver, args=(agent_socket, server_address), daemon=True)
+        udp_receiver_thread = Thread(target=udp_receiver, args=(agent_socket, server_address, tcp_port), daemon=True)
         udp_receiver_thread.start()
 
         try:
@@ -242,26 +262,3 @@ if __name__ == "__main__":
             agent_socket.close()
 
 
-def send_tcp_message(server_ip, tcp_port, message):
-    """
-    Envia uma mensagem via TCP para o servidor e espera por uma resposta.
-    """
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as tcp_sock:
-            # Conectar ao servidor
-            tcp_sock.connect((server_ip, tcp_port))
-            print(f"[TCP] Conectado ao servidor TCP em {server_ip}:{tcp_port}")
-
-            # Enviar a mensagem
-            tcp_sock.sendall(message)
-            print(f"[TCP] Mensagem enviada: {mensagens.decode_message(message)}")
-
-            # Receber a resposta
-            ack = tcp_sock.recv(1024)
-            decoded_response = mensagens.decode_message(ack)
-            print(f"[TCP] Resposta do servidor: {decoded_response}")
-
-            return decoded_response
-    except Exception as e:
-        print(f"[TCP] Erro na comunicação TCP: {e}")
-        return None

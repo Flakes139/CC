@@ -18,6 +18,7 @@ def initialize_server():
     Solicita ao usuário a porta UDP e o caminho do JSON para configurar o servidor e inicia o servidor iperf.
     """
     udp_port = 33333
+    tcp_port = 44444
     json_path = "teste.json"
 
     # Carregar tarefas do JSON
@@ -36,7 +37,7 @@ def initialize_server():
     except Exception as e:
         print(f"[Erro] Não foi possível iniciar o servidor iperf: {e}")
 
-    return udp_port
+    return udp_port, tcp_port
 
 
 
@@ -205,13 +206,62 @@ def send_task_to_agent(sock, agent_id):
     except Exception as e:
         print(f"[NetTask] Erro ao enviar tarefa para o agente {agent_id}: {e}")
 
+def process_alertflow(conn, addr):
+    """
+    Processa mensagens ALERTFLOW recebidas via TCP.
+    """
+    try:
+        print(f"[TCP] Conexão recebida de {addr}")
+        message = conn.recv(1024)
+        if not message:
+            print(f"[TCP] Nenhuma mensagem recebida de {addr}")
+            return
+
+        decoded = mensagens.decode_message(message)
+        print(f"[TCP] Mensagem ALERTFLOW recebida: {decoded}")
+
+        # Envia ACK como resposta
+        if "sequence" in decoded:
+            ack_message = mensagens.create_ack_message(decoded["sequence"])
+            conn.sendall(ack_message)
+            print(f"[TCP] ACK enviado para {addr}")
+        else:
+            print("[TCP] Mensagem ALERTFLOW sem sequência válida.")
+
+    except Exception as e:
+        print(f"[TCP] Erro ao processar mensagem ALERTFLOW de {addr}: {e}")
+    finally:
+        conn.close()
+        print(f"[TCP] Conexão encerrada com {addr}")
+
+def tcp_server(tcp_port):
+    """
+    Servidor TCP que processa mensagens ALERTFLOW.
+    """
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(('0.0.0.0', tcp_port))
+    sock.listen(5)  # Aceita até 5 conexões simultâneas
+    print(f"[TCP] Servidor ouvindo na porta {tcp_port}")
+
+    while True:
+        try:
+            conn, addr = sock.accept()
+            Thread(target=process_alertflow, args=(conn, addr), daemon=True).start()
+        except Exception as e:
+            print(f"[TCP] Erro ao aceitar conexão: {e}")
+
+
 
 if __name__ == "__main__":
+    udp_port, tcp_port = initialize_server()
 
-    udp_port = initialize_server()
-
+    # Inicia o servidor UDP
     udp_server_thread = Thread(target=udp_server, args=(udp_port,), daemon=True)
     udp_server_thread.start()
+
+    # Inicia o servidor TCP
+    tcp_server_thread = Thread(target=tcp_server, args=(tcp_port,), daemon=True)
+    tcp_server_thread.start()
 
     print("Servidor rodando. Pressione Ctrl+C para encerrar.")
 
