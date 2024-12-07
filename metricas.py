@@ -107,10 +107,6 @@ def iperf_and_store(server, port, duration):
             "error": str(e)  # Mensagem de erro para depuração
         }
 
-    except Exception as e:
-        print(f"Erro: {e}")
-        return None  # Retorna None em caso de erro
-
 
 def collect_cpu_usage():
         """
@@ -138,7 +134,13 @@ def get_ram_usage():
         return ram_usage  # Retornar o dicionário com as informações de RAM
     except Exception as e:
         print(f"Erro ao obter o uso da RAM: {e}")
-        return None  # Retornar None em caso de erro
+        ram_usage = {
+            "total": 0,
+            "available": 0,
+            "used": 0,
+            "percent": 0
+        }
+        return ram_usage  # Retornar None em caso de erro
 
 if __name__ == "__main__":
     print("Escolha uma métrica para monitorar continuamente:")
