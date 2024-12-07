@@ -93,7 +93,7 @@ def create_report_message(report):
     try:
         # Cabeçalho do relatório
         report_content = []
-        report_content.append(f"{' Relatorio da Tarefa ':''^50}")
+        report_content.append(f"{' Relatorio da Tarefa ':' '^50}")
         report_content.append(f"ID da Tarefa: {report.get('task_id')}")
         report_content.append(f"Status: {report.get('status')}\n")
 
@@ -101,7 +101,7 @@ def create_report_message(report):
         report_content.append("Resultados Detalhados:\n")
 
         for i, result in enumerate(report.get('results'), start=1):
-            report_content.append(f"{' Tentativa ' + str(i) + ' ':''^50}")
+            report_content.append(f"{' Tentativa ' + str(i) + ' ':' '^50}")
 
             if "ping" in result:
                 ping = result["ping"]
