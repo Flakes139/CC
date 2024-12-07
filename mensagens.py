@@ -64,22 +64,23 @@ def decode_message(data):
     else:
         return {"type": "UNKNOWN", "raw_data": data}
     
-def create_alert_message(report):
+def create_alert_message(report, sequence):
     """
-    Cria uma mensagem de alertflow em JSON.
+    Cria uma mensagem ALERTFLOW com o mesmo formato que REPORT.
     """
-    alert_data = json.dumps({"type": "ALERTFLOW", **report})
-    return alert_data.encode('utf-8')
+    message_type = MESSAGE_TYPES["REPORT"]  # ALERTFLOW também usa tipo REPORT
+    report["type"] = "ALERTFLOW"  # Indicar que é um ALERTFLOW
+    report_content = create_report_message(report)
+    return struct.pack("!BB", message_type, sequence) + report_content.encode('utf-8')
 
-def create_alert_message_metric(result):
+def create_alert_message_metric(result, sequence):
     """
-    Cria uma mensagem de alertflow em JSON.
+    Cria uma mensagem ALERTFLOW baseada em métricas.
     """
-    if not isinstance(result, dict):
-        raise ValueError(f"O parâmetro 'result' deve ser um dicionário, mas recebeu {type(result)}")
-    
-    alert_data = json.dumps({"type": "ALERTFLOW", **result})
-    return alert_data.encode('utf-8')
+    message_type = MESSAGE_TYPES["REPORT"]  # ALERTFLOW também usa tipo REPORT
+    result["type"] = "ALERTFLOW"
+    alert_content = json.dumps(result)
+    return struct.pack("!BB", message_type, sequence) + alert_content.encode('utf-8')
 
 
 def create_report_message(report):

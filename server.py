@@ -208,7 +208,7 @@ def send_task_to_agent(sock, agent_id):
 
 def process_alertflow(conn, addr):
     """
-    Processa mensagens ALERTFLOW recebidas via TCP.
+    Processa mensagens ALERTFLOW recebidas via TCP, semelhante ao REPORT.
     """
     try:
         print(f"[TCP] Conexão recebida de {addr}")
@@ -217,16 +217,20 @@ def process_alertflow(conn, addr):
             print(f"[TCP] Nenhuma mensagem recebida de {addr}")
             return
 
+        # Decodificar mensagem usando o formato REPORT
         decoded = mensagens.decode_message(message)
-        print(f"[TCP] Mensagem ALERTFLOW recebida: {decoded}")
 
-        # Envia ACK como resposta
-        if "sequence" in decoded:
-            ack_message = mensagens.create_ack_message(decoded["sequence"])
-            conn.sendall(ack_message)
-            print(f"[TCP] ACK enviado para {addr}")
+        if decoded["type"] == "ALERTFLOW":
+            print(f"[TCP] Mensagem ALERTFLOW recebida: {decoded}")
+            # Envia ACK como resposta
+            if "sequence" in decoded:
+                ack_message = mensagens.create_ack_message(decoded["sequence"])
+                conn.sendall(ack_message)
+                print(f"[TCP] ACK enviado para {addr}")
+            else:
+                print("[TCP] Mensagem ALERTFLOW sem sequência válida.")
         else:
-            print("[TCP] Mensagem ALERTFLOW sem sequência válida.")
+            print(f"[TCP] Mensagem de tipo inesperado recebida: {decoded}")
 
     except Exception as e:
         print(f"[TCP] Erro ao processar mensagem ALERTFLOW de {addr}: {e}")
