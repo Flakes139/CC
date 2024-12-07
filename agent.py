@@ -183,10 +183,10 @@ def process_task(sock, server_address, task, alertflow_count, tcp_port):
         send_alertflow(sock, server_address, report, tcp_port,sequence)
         alertflow_count += 1
     else:
-        send_report(sock, server_address, report, sequence)
+       send_report(sock, server_address, report, sequence)
         
     return alertflow_count
-
+ 
 def send_report(sock, server_address, report,sequence):
     """
     Envia o relatório final ao servidor.
