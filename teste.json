@@ -14,7 +14,7 @@
                     "link_metrics": {},
                     "alertflow_conditions": {
                         "cpu_usage": 80,
-                        "ram_usage": 10
+                        "ram_usage": 80
                     }
                 },
                 {
