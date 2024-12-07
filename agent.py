@@ -112,36 +112,35 @@ def send_alertflow(sock, server_address, report, tcp_port):
     print(f"[ALERTFLOW] Enviado: {report}")
 
 
-def process_task(sock, server_address, task, alertflow_count, tcp_port):
+def process_task(sock, server_address, task, alertflow_count):
     """
-    Processa a tarefa recebida e realiza as métricas.
+    Processa a tarefa recebida e realiza as metricas.
+    Envia um relatório final ou alertflow ao servidor.
     """
     sequence = task.get("sequence")
+
     task_id = task.get("sequence")
     metrics = task.get("metrics")
     link_metrics = task.get("link_metrics")
     alert_conditions = task.get("alert_conditions")
-    results = []
 
+
+    results = []
     try:
         for attempt in range(1, 4):  # Loop de tentativas
-            if alertflow_count >= 3:
-                print("[TASK] Limite de ALERTFLOW alcançado. Encerrando processamento.")
-                break
-
             result = {}
 
-            
+            # Executar métricas (ping, iperf, etc.)
             if "latency" in link_metrics:
                 print(f"[TASK] Realizando ping ({attempt}/3)...")
                 result["ping"] = metricas.ping_and_store(
                     link_metrics["latency"]["ping"]["destination"],
                     link_metrics["latency"]["ping"]["count"]
                 )
-                if int(result["ping"].get('avg_time', 'N/A')) > alert_conditions["latency"]:
+                if int(result["ping"].get('avg_time', 'N/A')) > alert_conditions["latency"] :
                     send_alertflow_metric(sock, server_address, result["ping"].get('avg_time', 'N/A'), alert_conditions["latency"], tcp_port)
-                    alertflow_count += 1               
-        # Outras métricas
+                    alertflow_count = alertflow_count + 1
+
             if "bandwidth" in link_metrics:
                 print(f"[TASK] Realizando iperf ({attempt}/3)...")
                 result["iperf"] = metricas.iperf_and_store(
@@ -149,10 +148,10 @@ def process_task(sock, server_address, task, alertflow_count, tcp_port):
                     link_metrics["bandwidth"]["iperf"].get("port"),
                     link_metrics["bandwidth"]["iperf"].get("duration")
                 )
-                if int(result["iperf"].get('bandwidth_mbps', 'N/A')) < alert_conditions["bandwidth"]:
-                    send_alertflow_metric(sock, server_address, result["iperf"].get('bandwidth_mbps', 'N/A'), alert_conditions["bandwidth"], tcp_port)
-                    alertflow_count += 1               
-        # Adicionar mais métricas conforme necessário
+                if int(result["iperf"].get('bandwidth_mbps', 'N/A')) < alert_conditions["bandwidth"] : 
+                    send_alertflow_metric(sock, server_address, result["iperf"].get('bandwidth_mbps', 'N/A'), alert_conditions["bandwidth"], tcp_port )
+                    alertflow_count = alertflow_count + 1
+
             if metrics.get("cpu_usage") == True:
                 print(f"[TASK] Monitorando CPU ({attempt}/3)...")
                 result["cpu"] = metricas.collect_cpu_usage()
@@ -164,26 +163,27 @@ def process_task(sock, server_address, task, alertflow_count, tcp_port):
                 print(f"[TASK] Monitorando RAM ({attempt}/3)...")
                 result["ram"] = metricas.get_ram_usage()
                 if int(result["ram"].get('percent', 'N/A')) > alert_conditions["ram_usage"] :
-                    send_alertflow(sock, server_address, result["ram"].get('percent', 'N/A'),alert_conditions["ram_usage"])
+                    send_alertflow(sock, server_address, result["ram"].get('percent', 'N/A'),alert_conditions["ram_usage"], tcp_port)
                     alertflow_count = alertflow_count + 1
 
-            results.append(result)  # Adiciona o resultado desta tentativa
+            results.append(result)  # Adiciona o resultado desta tentativa à lista de resultados
             time.sleep(5)
 
+        # Criar o relatório final após as tentativas
+    
         report = {"task_id": task_id, "results": results, "status": "success"}
     except Exception as e:
         print(f"[TASK] Falha na tarefa {task_id}: {e}")
         report = {"task_id": task_id, "results": results, "status": "failed", "error": str(e)}
 
+    # Avaliar as condições de alerta
     if report["status"] == "failed":
         send_alertflow(sock, server_address, report, tcp_port)
         alertflow_count += 1
     else:
         send_report(sock, server_address, report, sequence)
-
-    return alertflow_count
-
-
+        return alertflow_count
+    return 0
 def send_report(sock, server_address, report,sequence):
     """
     Envia o relatório final ao servidor.
