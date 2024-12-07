@@ -245,7 +245,7 @@ def tcp_server(tcp_port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind(('0.0.0.0', tcp_port))
     sock.listen(5)  # Aceita até 5 conexões simultâneas
-    print(f"[TCP] Servidor ouvindo na porta {tcp_port}")
+    print(f"[TCP] Servidor ouvindo na porta TCP {tcp_port}")
 
     while True:
         try:
