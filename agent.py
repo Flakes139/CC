@@ -10,6 +10,7 @@ def initialize_agent():
     """
     server_ip = input("Digite o IP do servidor: ").strip()
     udp_port = 33333
+    tcp_port = 44444
     agent_id = int(input("Digite o ID do agente: ").strip())
     return server_ip, udp_port, agent_id
 
@@ -130,28 +131,33 @@ def process_task(sock, server_address, task, alertflow_count):
 
 
 
-def send_alertflow_metric(sock, server_address, result, alert_condition):
+def send_alertflow_metric(sock, server_address, result, alert_condition, tcp_port):
     """
     Envia um alertflow ao servidor.
     """
-    # Envolvendo o resultado em um dicionário
+    
+        # Envolvendo o resultado em um dicionário
     if isinstance(result, (int, float)):
         result = {"value": result}  # Transformar em dicionário se for um número
 
     result["alert_condition"] = alert_condition  # Adicionar a condição de alerta
-
+    
     alert_message = mensagens.create_alert_message_metric(result)
-    sock.sendto(alert_message, server_address)
-    print(f"[ALERTFLOW] Enviado: {result}")
+    
+        # Enviar o alertflow via TCP
+    response = send_tcp_message(server_address[0], tcp_port, alert_message)
+    if response:
+        print(f"[ALERTFLOW - TCP] Alertflow enviado e resposta recebida: {response}")
+    else:
+        print("[ALERTFLOW - TCP] Falha ao enviar alertflow.")
 
 
-
-def send_alertflow(sock, server_address, report):
+def send_alertflow(sock, server_address, report, tcp_port):
     """
     Envia um alertflow ao servidor.
     """
     alert_message = mensagens.create_alert_message(report)
-    sock.sendto(alert_message, server_address)
+    send_tcp_message(server_address, tcp_port, alert_message)
     print(f"[ALERTFLOW] Enviado: {report}")
 
 def send_report(sock, server_address, report,sequence):
@@ -213,7 +219,7 @@ def udp_receiver(sock, server_address):
 
 
 if __name__ == "__main__":
-    server_ip, udp_port, agent_id = initialize_agent()
+    server_ip, udp_port, tcp_port, agent_id = initialize_agent()
 
     # Criar uma única socket para todo o ciclo de vida do agente
     agent_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -234,3 +240,28 @@ if __name__ == "__main__":
         except KeyboardInterrupt:
             print("\n[Agente] Encerrado.")
             agent_socket.close()
+
+
+def send_tcp_message(server_ip, tcp_port, message):
+    """
+    Envia uma mensagem via TCP para o servidor e espera por uma resposta.
+    """
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as tcp_sock:
+            # Conectar ao servidor
+            tcp_sock.connect((server_ip, tcp_port))
+            print(f"[TCP] Conectado ao servidor TCP em {server_ip}:{tcp_port}")
+
+            # Enviar a mensagem
+            tcp_sock.sendall(message)
+            print(f"[TCP] Mensagem enviada: {mensagens.decode_message(message)}")
+
+            # Receber a resposta
+            ack = tcp_sock.recv(1024)
+            decoded_response = mensagens.decode_message(ack)
+            print(f"[TCP] Resposta do servidor: {decoded_response}")
+
+            return decoded_response
+    except Exception as e:
+        print(f"[TCP] Erro na comunicação TCP: {e}")
+        return None
